@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<h1>Article List</h1>
+{% if article_list %}
+<ul>
+    {% for article in article_list %}
+        <li>
+        <a href="{{ article.url }}">{{ article.name }}</a>
+        </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>There are no articles.</p>
+{% endif %}
+
+<a href="{% url 'article_create_form' %}">Create Article</a>
+</body>
+</html>
