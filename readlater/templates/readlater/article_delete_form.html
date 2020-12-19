@@ -1,0 +1,17 @@
+{% extends 'readlater/base.html' %}
+
+{% block title %}
+Create Article
+{% endblock title %}
+
+{% block breadcrumb %}
+    <h4>Delete Article</h4>
+{% endblock %}
+
+{% block content %}
+<form method="post">{% csrf_token %}
+    <p>Are you sure you want to delete the article {{ object }}?</p>
+    <input type="hidden" name="state" value="{{ request.GET.state }}">
+    <input type="submit" value="Confirm">
+</form>
+{% endblock content %}

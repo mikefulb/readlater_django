@@ -1,5 +1,5 @@
 from django.urls import path
-
+from django.views.generic.base import RedirectView
 from . import views
 
 
@@ -21,10 +21,13 @@ from . import views
 #
 
 urlpatterns = [
-    path('', views.ArticleList.as_view(), name='article_list'),
+    path('', RedirectView.as_view(pattern_name='article_list'), name='home'),
+    #path('articles', views.ArticleList.as_view(), name='article_list'),
+    path('articles/', views.ArticleList.as_view(), name='article_list'),
+    path('articles/<str:state>', views.ArticleList.as_view(), name='article_list_with_state'),
     path('article/create/new', views.ArticleCreateView.as_view(), name='article_create_form'),
-#    path('article/edit/<int:pk>', views.ArticleEditForm.as_view(), name='article_edit_form'),
-#    path('article/delete/<int:pk>>', views.ArticleDeleteForm.as_view(), name='article_delete_form'),
+    path('article/edit/<int:pk>', views.ArticleEditView.as_view(), name='article_edit_form'),
+    path('article/delete/<int:pk>', views.ArticleDeleteView.as_view(), name='article_delete_form'),
     # path('projects/', views.ProjectList.as_view(), name='projects-list'),
     # path('projects/<int:project_id>/', views.project, name='project-summary'),
     # path('requests/<int:request_id>/', views.request, name='request')

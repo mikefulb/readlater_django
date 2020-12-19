@@ -1,5 +1,6 @@
 import datetime
 from django.db import models
+from django.db.models import Max
 from django.urls import reverse
 from django.core.validators import MinValueValidator, MaxValueValidator
 
@@ -22,20 +23,29 @@ class Category(models.Model):
         return f'{self.name}'
 
 
+class ArticleManager(models.Manager):
+
+    def get_max_rank(self):
+        """ Return maximum rank value. """
+        query_set = self.get_queryset()
+
+        return query_set.aggregate(Max('rank'))['rank__max']
+
+
 class Article(models.Model):
     """
     Model definition for an article to be read later.
 
     Explanation of 'rank'' field:
-      To allow the articles to be re-ordered by the user the 'rank' field will reference a key into another
-      table that maps
+      To allow the articles to be re-ordered by the user the 'rank' field with lower rank meaning
+      the article should be closer to the top of the viewable list.
 
     """
     name = models.CharField(max_length=100, unique=True, help_text='Name of article.')
     url = models.URLField(max_length=200, help_text='URL for article.')
     category = models.ForeignKey(Category, related_name='articvle', on_delete=models.CASCADE,
                                  help_text='Article category.')
-    rank = models.IntegerField(editable=False, help_text='Article rank.')
+    rank = models.IntegerField(editable=False, unique=True, help_text='Article rank.')
     progress = models.IntegerField(default=0,
                                    validators=[MinValueValidator(0), MaxValueValidator(100)],
                                    help_text='Percentage progress reading article.')
@@ -45,9 +55,10 @@ class Article(models.Model):
                                          help_text='Timestamp for when article was finished.')
     updated_time = models.DateTimeField(null=True, blank=True, editable=False,
                                         help_text='Timestamp for when progress was updated.')
+    objects = ArticleManager()
 
     def get_absolute_url(self):
-        """Default URL for display contents."""
+        """ Default URL for display contents. """
         return reverse('article_list')
 
     def __str__(self):

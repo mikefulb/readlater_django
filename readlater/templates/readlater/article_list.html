@@ -5,7 +5,18 @@ Article List
 {% endblock title %}
 
 {% block breadcrumb %}
-    <h4>Article List</h4>
+    <h4>Article List |
+        {% if state|lower != 'read'  %}
+            Unread
+        {% else %}
+            <a href="unread">Unread</a>
+        {% endif %}
+        |
+        {% if state|lower == 'read' %}
+            Read
+        {% else %}
+            <a href="read">Read</a></h4>
+        {% endif %}
 {% endblock %}
 
 {% block content %}
@@ -38,12 +49,11 @@ Article List
           <td>{{ article.category }}</td>
           <td>{{ article.rank }}</td>
           <td>{{ article.progress }}</td>
-          <td>{{ article.updated_time }}</td>
+          <td>{{ article.updated_time|default_if_none:''}}</td>
           <td>{{ article.added_time }}</td>
-          <td>{{ article.finished_time }}</td>
-          <!--<td><a href="{#  #} url 'article_edit_form' article.pk #}">EDIT</a></td>
-          <td><a href="{#  #} url 'article_delete_form' article.pk #}">DELETE</a></td>
-          -->
+          <td>{{ article.finished_time|default_if_none:''}}</td>
+          <td><a href="{% url 'article_edit_form' article.pk %}?state={{ state|urlencode }}">EDIT</a></td>
+          <td><a href="{% url 'article_delete_form' article.pk %}?state={{ state|urlencode }}">DELETE</a></td>
       </tr>
     {% endfor %}
   </tbody>
