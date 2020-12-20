@@ -42,10 +42,11 @@ class Article(models.Model):
 
     """
     name = models.CharField(max_length=100, unique=True, help_text='Name of article.')
+    notes = models.CharField(max_length=100, blank=True, help_text='Notes about article.')
     url = models.URLField(max_length=200, help_text='URL for article.')
     category = models.ForeignKey(Category, related_name='articvle', on_delete=models.CASCADE,
                                  help_text='Article category.')
-    rank = models.IntegerField(editable=False, unique=True, help_text='Article rank.')
+    rank = models.IntegerField(editable=False, unique=False, help_text='Article rank.')
     progress = models.IntegerField(default=0,
                                    validators=[MinValueValidator(0), MaxValueValidator(100)],
                                    help_text='Percentage progress reading article.')

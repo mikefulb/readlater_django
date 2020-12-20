@@ -28,6 +28,7 @@ urlpatterns = [
     path('article/create/new', views.ArticleCreateView.as_view(), name='article_create_form'),
     path('article/edit/<int:pk>', views.ArticleEditView.as_view(), name='article_edit_form'),
     path('article/delete/<int:pk>', views.ArticleDeleteView.as_view(), name='article_delete_form'),
+    path('article/move/<str:where>/<int:pk>', views.article_move, name='article_move'),
     # path('projects/', views.ProjectList.as_view(), name='projects-list'),
     # path('projects/<int:project_id>/', views.project, name='project-summary'),
     # path('requests/<int:request_id>/', views.request, name='request')

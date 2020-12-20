@@ -1,5 +1,7 @@
 {% extends 'readlater/base.html' %}
 
+{% load only_days %}
+
 {% block title %}
 Article List
 {% endblock title %}
@@ -21,40 +23,61 @@ Article List
 
 {% block content %}
 {% if article_list %}
-{#<ul>#}
-{#    {% for article in article_list %}#}
-{#        <li>#}
-{#        <a href="{{ article.url }}">{{ article.name }}</a>#}
-{#        </li>#}
-{#    {% endfor %}#}
-{#</ul>#}
 <table class="table table-striped">
   <thead class="thead-dark">
     <th>Link</th>
     <th>Name</th>
-    <th>Category</th>
-    <th>Rank</th>
-    <th>Progress</th>
-    <th>Updated</th>
-    <th>Added</th>
-    <th>Finished</th>
-    <th>Edit</th>
-    <th>Delete</th>
-  </thead>
+    {% if order_col == 'category' %}
+        <th>Category</th>
+    {% else %}
+        <th><a href="{% url 'article_list' %}{{ state }}?orderby=-category">Category</a></th>
+    {% endif %}
+    <th>Notes</th>
+    {% if order_col == 'rank' %}
+        <th>Rank</th>
+    {% else %}
+        <th><a href="{% url 'article_list' %}{{ state }}?orderby=rank">Rank</a></th>
+    {% endif %}
+    {% if order_col == 'progress' %}
+        <th>Progress</th>
+    {% else %}
+        <th><a href="{% url 'article_list' %}{{ state }}?orderby=progress">Progress</a></th>
+    {% endif %}
+    {% if order_col == 'updated_time' %}
+        <th>Updated</th>
+    {% else %}
+        <th><a href="{% url 'article_list' %}{{ state }}?orderby=-updated_time">Updated</a></th>
+    {% endif %}
+    {% if order_col == 'added_time' %}
+        <th>Added</th>
+    {% else %}
+        <th><a href="{% url 'article_list' %}{{ state }}?orderby=-added_time">Added</a></th>
+    {% endif %}
+    {% if order_col != 'finished_time_disabled' %}
+        <th>Finished</th>
+    {% else %}
+        <th><a href="{% url 'article_list' %}{{ state }}?orderby=-finished_time">Finished</a></th>
+    {% endif %}
+    <th></th>
+    <th></th>
+    <th></th>
+</thead>
   <tbody>
     {% for article in article_list %}
       <tr>
           <td><a href="{{ article.url }}">LINK</a></td>
           <td>{{ article.name }}</td>
           <td>{{ article.category }}</td>
-          <td>{{ article.rank }}</td>
+          <td>{{ article.notes }}</td>
+          <td>{{ forloop.counter }}</td>
           <td>{{ article.progress }}</td>
-          <td>{{ article.updated_time|default_if_none:''}}</td>
-          <td>{{ article.added_time }}</td>
-          <td>{{ article.finished_time|default_if_none:''}}</td>
+          <td>{{ article.updated_time|default_if_none:''|nice_timesince}}</td>
+          <td>{{ article.added_time|nice_timesince }}</td>
+          <td>{{ article.finished_time|default_if_none:''|nice_timesince}}</td>
           <td><a href="{% url 'article_edit_form' article.pk %}?state={{ state|urlencode }}">EDIT</a></td>
           <td><a href="{% url 'article_delete_form' article.pk %}?state={{ state|urlencode }}">DELETE</a></td>
-      </tr>
+          <td><a href="{% url 'article_move' 'top' article.pk %}?state={{ state|urlencode }}">TOP</a></td>
+     </tr>
     {% endfor %}
   </tbody>
 </table>

@@ -1,6 +1,8 @@
 import datetime
+
+from django.db import transaction
 from django.http import HttpResponseRedirect, Http404
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views import View, generic
 from django.views.generic.edit import ModelFormMixin
 from django.urls import reverse_lazy, reverse
@@ -19,8 +21,37 @@ class ArticleList(generic.ListView):
     """ Show unfinished articles """
     model = Article
     #queryset = model.objects.filter(progress__lt=100)
-    ordering = ['-category', 'progress', 'rank', '-added_time']
+    #ordering = ['rank', '-category', 'progress',  '-added_time']
     context_object_name = 'article_list'
+
+    # default field to order by if no valid no given
+    _order_field = 'rank'
+
+
+    def _get_order_col_via_url(self, clean=True):
+        """
+        Return field to order list of articles by.
+        If field name is preceded by a '-' then order of list is reversed.
+        Specify clean=True to remove this extra punctuation otherwise it will be left on the name.
+
+        :param clean: If True clean parameter or any punctuation.
+        :type clean: bool
+        :return: Field name to order list by.
+        :rtype: str
+        """
+        # pull ordering field from GET if present
+        order_col = self.request.GET.get('orderby', self._order_field)
+
+        # test it is a valid option or set a default
+        # strip off '-' at front of field name used to change order of sort
+        # FIXME is this best way or should this be all inside the model or model manager
+        if not getattr(Article, order_col.strip('-'), None):
+            order_col = self._order_field
+
+        if clean:
+            order_col = order_col.strip('-')
+
+        return order_col
 
     def get(self, request, *args, **kwargs):
         print('get', kwargs)
@@ -33,18 +64,25 @@ class ArticleList(generic.ListView):
         return super().get(self, request, *args, **kwargs)
 
     def get_queryset(self):
+        order_col = self._get_order_col_via_url(clean=False)
+
         if self.kwargs.get('state') == 'read':
-            return self.model.objects.filter(progress=100)
+            return self.model.objects.filter(progress=100).order_by(order_col)
         else:
-            return self.model.objects.filter(progress__lt=100)
+            return self.model.objects.filter(progress__lt=100).order_by(order_col)
 
     def get_context_data(self, *, object_list=None, **kwargs):
         # Call the base implementation first to get a context
         context = super().get_context_data(**kwargs)
+
         # if state is not defined then default to unread listing
         print('get_context_data')
         print(self.kwargs)
         context['state'] = self.kwargs.get('state') or 'unread'
+
+        # see if any list ordering specified
+        context['order_col'] = self._get_order_col_via_url()
+
         return context
 
 
@@ -85,6 +123,7 @@ class ArticleEditView(generic.UpdateView):
         state = self.request.GET.get('state')
         return reverse('article_list_with_state', kwargs={'state': state})
 
+
 class ArticleDeleteView(generic.DeleteView):
     model = Article
     #form_class = ArticleDeleteForm
@@ -96,3 +135,32 @@ class ArticleDeleteView(generic.DeleteView):
         print(self.request.POST)
         state = self.request.POST.get('state')
         return reverse('article_list_with_state', kwargs={'state': state})
+
+
+def article_move(request, where, pk):
+    print(where, pk)
+    item = Article.objects.get(id=pk)
+    print('item', item)
+    if not item:
+        return Http404(f'Item id={pk} to be moved to {where} is missing!')
+
+    # find the top item in list
+    first = Article.objects.order_by('rank').first()
+    print('first', first)
+    if first:
+        with transaction.atomic():
+            print(first.rank, item.rank)
+            first_rank = first.rank
+            first.rank = item.rank
+            first.save()
+            item.rank = first_rank
+            item.save()
+            print(first.rank, item.rank)
+            print(first)
+            print(item)
+    else:
+        # only item in list just pass through
+        pass
+
+
+    return redirect(request.META['HTTP_REFERER'])
