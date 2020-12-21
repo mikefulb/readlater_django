@@ -33,10 +33,10 @@ Article List
         <th><a href="{% url 'article_list' %}{{ state }}?orderby=-category">Category</a></th>
     {% endif %}
     <th>Notes</th>
-    {% if order_col == 'rank' %}
-        <th>Rank</th>
+    {% if order_col == 'priority' %}
+        <th>Priority</th>
     {% else %}
-        <th><a href="{% url 'article_list' %}{{ state }}?orderby=rank">Rank</a></th>
+        <th><a href="{% url 'article_list' %}{{ state }}?orderby=priority">Priority</a></th>
     {% endif %}
     {% if order_col == 'progress' %}
         <th>Progress</th>
@@ -53,11 +53,16 @@ Article List
     {% else %}
         <th><a href="{% url 'article_list' %}{{ state }}?orderby=-added_time">Added</a></th>
     {% endif %}
-    {% if order_col != 'finished_time_disabled' %}
-        <th>Finished</th>
+    {% if state == 'read' %}
+        {% if order_col != 'finished_time' %}
+            <th>Finished</th>
+        {% else %}
+            <th><a href="{% url 'article_list' %}{{ state }}?orderby=-finished_time">Finished</a></th>
+        {% endif %}
     {% else %}
-        <th><a href="{% url 'article_list' %}{{ state }}?orderby=-finished_time">Finished</a></th>
+        <th></th>
     {% endif %}
+
     <th></th>
     <th></th>
     <th></th>
@@ -69,14 +74,13 @@ Article List
           <td>{{ article.name }}</td>
           <td>{{ article.category }}</td>
           <td>{{ article.notes }}</td>
-          <td>{{ forloop.counter }}</td>
+          <td>{{ article.get_priority_display }}</td>
           <td>{{ article.progress }}</td>
           <td>{{ article.updated_time|default_if_none:''|nice_timesince}}</td>
           <td>{{ article.added_time|nice_timesince }}</td>
           <td>{{ article.finished_time|default_if_none:''|nice_timesince}}</td>
           <td><a href="{% url 'article_edit_form' article.pk %}?state={{ state|urlencode }}">EDIT</a></td>
           <td><a href="{% url 'article_delete_form' article.pk %}?state={{ state|urlencode }}">DELETE</a></td>
-          <td><a href="{% url 'article_move' 'top' article.pk %}?state={{ state|urlencode }}">TOP</a></td>
      </tr>
     {% endfor %}
   </tbody>

@@ -8,14 +8,14 @@ class ArticleCreateForm(forms.ModelForm):
 
     class Meta:
         model = Article
-        fields = ['name', 'url', 'category', 'notes']
+        fields = ['name', 'url', 'category', 'priority', 'notes']
 
 
 class ArticleEditForm(forms.ModelForm):
 
     class Meta:
         model = Article
-        fields = ['name', 'url', 'category', 'progress', 'notes']
+        fields = ['name', 'url', 'category', 'priority', 'progress', 'notes']
 
 
 # class ArticleDeleteForm(forms.ModelForm):

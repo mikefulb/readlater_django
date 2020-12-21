@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 n*$py.class
 
+# pycharm
+.idea/
+
 # Django stuff:
 *.log
 local_settings.py

@@ -14,7 +14,7 @@ from .models import Article
 from .forms import ArticleCreateForm, ArticleEditForm #, ArticleDeleteForm
 
 # spacing between new entry and lowest rank
-RANK_SPACING = 100000
+#RANK_SPACING = 100000
 
 
 class ArticleList(generic.ListView):
@@ -25,8 +25,25 @@ class ArticleList(generic.ListView):
     context_object_name = 'article_list'
 
     # default field to order by if no valid no given
-    _order_field = 'rank'
+    _order_field = 'priority'
 
+    # for each order field specify secondary ordering priorities
+    # _order_hier = {
+    #         'priority': ('priority', '-added_time', 'progress', 'category'),
+    #         'category': ('-category', 'priority', '-added_time', 'progress'),
+    #         'progress': ('-progress', 'priority'),
+    # }
+
+    _order_hier = {
+            'priority': ('priority',  '-progress'),
+            'category': ('-category', 'priority', 'updated_time', '-added_time', '-progress'),
+            'progress': ('-progress', 'priority', 'updated_time', '-added_time', '-category'),
+    }
+
+    @staticmethod
+    def _clean_order_col(order_col):
+        """ Remove any ordering punctuation from a order column specification"""
+        return order_col.strip('-')
 
     def _get_order_col_via_url(self, clean=True):
         """
@@ -49,7 +66,7 @@ class ArticleList(generic.ListView):
             order_col = self._order_field
 
         if clean:
-            order_col = order_col.strip('-')
+            order_col = self._clean_order_col(order_col)
 
         return order_col
 
@@ -66,10 +83,14 @@ class ArticleList(generic.ListView):
     def get_queryset(self):
         order_col = self._get_order_col_via_url(clean=False)
 
+        # find secondary ordering priorities if any
+        order_hier = self._order_hier.get(self._clean_order_col(order_col),
+                                          (order_col,))
+        print('order_hier', order_hier)
         if self.kwargs.get('state') == 'read':
-            return self.model.objects.filter(progress=100).order_by(order_col)
+            return self.model.objects.filter(progress=100).order_by(*order_hier)
         else:
-            return self.model.objects.filter(progress__lt=100).order_by(order_col)
+            return self.model.objects.filter(progress__lt=100).order_by(*order_hier)
 
     def get_context_data(self, *, object_list=None, **kwargs):
         # Call the base implementation first to get a context
@@ -91,15 +112,15 @@ class ArticleCreateView(generic.CreateView):
     form_class = ArticleCreateForm
     template_name_suffix = '_create_form'
 
-    def form_valid(self, form):
-        """ Add values to instance before saving """
-        self.object = form.save(commit=False)
-
-        # set rank to largest value plus spacing between entries
-        rank_max = self.model.objects.get_max_rank()
-        self.object.rank = rank_max + RANK_SPACING
-        self.object.save()
-        return super().form_valid(form)
+    # def form_valid(self, form):
+    #     """ Add values to instance before saving """
+    #     self.object = form.save(commit=False)
+    #
+    #     # set rank to largest value plus spacing between entries
+    #     rank_max = self.model.objects.get_max_rank()
+    #     self.object.rank = rank_max + RANK_SPACING
+    #     self.object.save()
+    #     return super().form_valid(form)
 
 
 class ArticleEditView(generic.UpdateView):
@@ -137,30 +158,30 @@ class ArticleDeleteView(generic.DeleteView):
         return reverse('article_list_with_state', kwargs={'state': state})
 
 
-def article_move(request, where, pk):
-    print(where, pk)
-    item = Article.objects.get(id=pk)
-    print('item', item)
-    if not item:
-        return Http404(f'Item id={pk} to be moved to {where} is missing!')
-
-    # find the top item in list
-    first = Article.objects.order_by('rank').first()
-    print('first', first)
-    if first:
-        with transaction.atomic():
-            print(first.rank, item.rank)
-            first_rank = first.rank
-            first.rank = item.rank
-            first.save()
-            item.rank = first_rank
-            item.save()
-            print(first.rank, item.rank)
-            print(first)
-            print(item)
-    else:
-        # only item in list just pass through
-        pass
-
-
-    return redirect(request.META['HTTP_REFERER'])
+# def article_move(request, where, pk):
+#     print(where, pk)
+#     item = Article.objects.get(id=pk)
+#     print('item', item)
+#     if not item:
+#         return Http404(f'Item id={pk} to be moved to {where} is missing!')
+#
+#     # find the top item in list
+#     first = Article.objects.order_by('rank').first()
+#     print('first', first)
+#     if first:
+#         with transaction.atomic():
+#             print(first.rank, item.rank)
+#             first_rank = first.rank
+#             first.rank = item.rank
+#             first.save()
+#             item.rank = first_rank
+#             item.save()
+#             print(first.rank, item.rank)
+#             print(first)
+#             print(item)
+#     else:
+#         # only item in list just pass through
+#         pass
+#
+#
+#     return redirect(request.META['HTTP_REFERER'])

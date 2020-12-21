@@ -23,13 +23,13 @@ class Category(models.Model):
         return f'{self.name}'
 
 
-class ArticleManager(models.Manager):
-
-    def get_max_rank(self):
-        """ Return maximum rank value. """
-        query_set = self.get_queryset()
-
-        return query_set.aggregate(Max('rank'))['rank__max']
+# class ArticleManager(models.Manager):
+#
+#     def get_max_rank(self):
+#         """ Return maximum rank value. """
+#         query_set = self.get_queryset()
+#
+#         return query_set.aggregate(Max('rank'))['rank__max']
 
 
 class Article(models.Model):
@@ -41,12 +41,20 @@ class Article(models.Model):
       the article should be closer to the top of the viewable list.
 
     """
+    PRIORITY_HIGHER = 0
+    PRIORITY_HIGH = 100
+    PRIORITY_NORMAL = 200
+    PRIORITY_LOW = 300
+    PRIORITY_LOWER = 400
+    PRIORITY_CHOICES = ((PRIORITY_LOWER, 'Lower'), (PRIORITY_LOW, 'Low'), (PRIORITY_NORMAL, 'Normal'),
+                        (PRIORITY_HIGH, 'High'), (PRIORITY_HIGHER, 'Higher'))
+
     name = models.CharField(max_length=100, unique=True, help_text='Name of article.')
     notes = models.CharField(max_length=100, blank=True, help_text='Notes about article.')
     url = models.URLField(max_length=200, help_text='URL for article.')
     category = models.ForeignKey(Category, related_name='articvle', on_delete=models.CASCADE,
                                  help_text='Article category.')
-    rank = models.IntegerField(editable=False, unique=False, help_text='Article rank.')
+    priority = models.IntegerField(choices=PRIORITY_CHOICES, default=PRIORITY_NORMAL, help_text='Article priority.')
     progress = models.IntegerField(default=0,
                                    validators=[MinValueValidator(0), MaxValueValidator(100)],
                                    help_text='Percentage progress reading article.')
@@ -56,11 +64,11 @@ class Article(models.Model):
                                          help_text='Timestamp for when article was finished.')
     updated_time = models.DateTimeField(null=True, blank=True, editable=False,
                                         help_text='Timestamp for when progress was updated.')
-    objects = ArticleManager()
+    #objects = ArticleManager()
 
     def get_absolute_url(self):
         """ Default URL for display contents. """
         return reverse('article_list')
 
     def __str__(self):
-        return f'{self.name} - {self.category} - {self.rank} - {self.progress}'
+        return f'{self.name} - {self.category} - {self.get_priority_display()} - {self.progress}'
