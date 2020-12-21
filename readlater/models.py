@@ -5,12 +5,12 @@ from django.urls import reverse
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 
-class Rank(models.Model):
-    """Rank of article relative to others in order of priority to read (high = read sooner)."""
-    rank = models.FloatField(help_text='Rank of article - higher value means read sooner.')
-
-    def __str__(self):
-        return f'{self.rank}'
+# class Rank(models.Model):
+#     """Rank of article relative to others in order of priority to read (high = read sooner)."""
+#     rank = models.FloatField(help_text='Rank of article - higher value means read sooner.')
+#
+#     def __str__(self):
+#         return f'{self.rank}'
 
 
 class Category(models.Model):
