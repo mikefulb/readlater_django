@@ -1,0 +1,35 @@
+{% extends 'readlater/base.html' %}
+
+{% block title %}
+Settings
+{% endblock title %}
+
+{% block breadcrumb %}
+    <h4>Settings</h4>
+{% endblock %}
+
+{% block content %}
+{% if category_list %}
+<h4>Categories</h4>
+<table class="table table-striped">
+  <thead class="thead-dark">
+    <th>Name</th>
+    <th></th>
+    <th></th>
+</thead>
+  <tbody>
+    {% for category in category_list %}
+      <tr>
+          <td>{{ category.name }}</td>
+          <td><a href="{% url 'category_edit_form' category.pk %}">EDIT</a></td>
+          <td><a href="{% url 'category_delete_form' category.pk %}">DELETE</a></td>
+     </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>There are no categories.</p>
+{% endif %}
+<br><br>
+<a href="{% url 'category_create_form' %}">Create Category</a>
+{% endblock %}

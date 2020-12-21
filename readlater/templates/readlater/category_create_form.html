@@ -3,17 +3,16 @@
 {% load crispy_forms_tags %}
 
 {% block title %}
-Edit Article
+Create Category
 {% endblock title %}
 
 {% block breadcrumb %}
-    <h4>Edit Article</h4>
+    <h4>Create Category</h4>
 {% endblock %}
 
 {% block content %}
-<form method="post">
-    {% csrf_token %}
+<form method="post">{% csrf_token %}
     {{ form|crispy }}
-    <tr><td><input type="submit" value="Save" class="btn btn-success"></td></tr>
+    <input type="submit" value="Save" class="btn btn-success">
 </form>
 {% endblock content %}

@@ -1,38 +1,22 @@
 import datetime
 
-from django.db import transaction
-from django.http import HttpResponseRedirect, Http404
-from django.shortcuts import render, redirect
-from django.views import View, generic
-from django.views.generic.edit import ModelFormMixin
+from django.http import Http404
+from django.views import generic
 from django.urls import reverse_lazy, reverse
 
-from django.db.models import Max
-
-
 from .models import Article
-from .forms import ArticleCreateForm, ArticleEditForm #, ArticleDeleteForm
-
-# spacing between new entry and lowest rank
-#RANK_SPACING = 100000
+from .models import Category
+from .forms import ArticleCreateForm, ArticleEditForm
+from .forms import CategoryCreateForm, CategoryEditForm
 
 
 class ArticleList(generic.ListView):
     """ Show unfinished articles """
     model = Article
-    #queryset = model.objects.filter(progress__lt=100)
-    #ordering = ['rank', '-category', 'progress',  '-added_time']
     context_object_name = 'article_list'
 
     # default field to order by if no valid no given
     _order_field = 'priority'
-
-    # for each order field specify secondary ordering priorities
-    # _order_hier = {
-    #         'priority': ('priority', '-added_time', 'progress', 'category'),
-    #         'category': ('-category', 'priority', '-added_time', 'progress'),
-    #         'progress': ('-progress', 'priority'),
-    # }
 
     _order_hier = {
             'priority': ('priority',  '-progress'),
@@ -147,7 +131,6 @@ class ArticleEditView(generic.UpdateView):
 
 class ArticleDeleteView(generic.DeleteView):
     model = Article
-    #form_class = ArticleDeleteForm
     success_url = reverse_lazy('article_list')
     template_name_suffix = '_delete_form'
 
@@ -158,30 +141,42 @@ class ArticleDeleteView(generic.DeleteView):
         return reverse('article_list_with_state', kwargs={'state': state})
 
 
-# def article_move(request, where, pk):
-#     print(where, pk)
-#     item = Article.objects.get(id=pk)
-#     print('item', item)
-#     if not item:
-#         return Http404(f'Item id={pk} to be moved to {where} is missing!')
-#
-#     # find the top item in list
-#     first = Article.objects.order_by('rank').first()
-#     print('first', first)
-#     if first:
-#         with transaction.atomic():
-#             print(first.rank, item.rank)
-#             first_rank = first.rank
-#             first.rank = item.rank
-#             first.save()
-#             item.rank = first_rank
-#             item.save()
-#             print(first.rank, item.rank)
-#             print(first)
-#             print(item)
-#     else:
-#         # only item in list just pass through
-#         pass
-#
-#
-#     return redirect(request.META['HTTP_REFERER'])
+class SettingsView(generic.base.TemplateView):
+    template_name = 'readlater/settings_base.html'
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        # Call the base implementation first to get a context
+        context = super().get_context_data(**kwargs)
+
+        # if state is not defined then default to unread listing
+        context['category_list'] = Category.objects.all().order_by('name')
+
+        return context
+
+
+class CategoryCreateView(generic.CreateView):
+    model = Category
+    fields = ('name',)
+    form_class = CategoryCreateForm
+    success_url = reverse_lazy('settings')
+    template_name_suffix = '_create_form'
+
+
+class CategoryEditView(generic.UpdateView):
+    model = Category
+    fields = ('name',)
+    form_class = CategoryEditForm
+    success_url = reverse_lazy('settings')
+    template_name_suffix = '_edit_form'
+
+
+class CategoryDeleteView(generic.DeleteView):
+    model = Category
+    success_url = reverse_lazy('settings')
+    template_name_suffix = '_delete_form'
+
+    # def get_success_url(self):
+    #     # make sure we go back to page that we were called from
+    #     print(self.request.POST)
+    #     state = self.request.POST.get('state')
+    #     return reverse('article_list_with_state', kwargs={'state': state})
