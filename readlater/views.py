@@ -55,7 +55,6 @@ class ArticleList(generic.ListView):
         return order_col
 
     def get(self, request, *args, **kwargs):
-        print('get', kwargs)
         # reject invalid state request (read or unread only allowed)
         state = kwargs.get('state')
         if state not in ['read', 'unread', None]:
@@ -70,7 +69,6 @@ class ArticleList(generic.ListView):
         # find secondary ordering priorities if any
         order_hier = self._order_hier.get(self._clean_order_col(order_col),
                                           (order_col,))
-        print('order_hier', order_hier)
         if self.kwargs.get('state') == 'read':
             return self.model.objects.filter(progress=100).order_by(*order_hier)
         else:
@@ -81,8 +79,6 @@ class ArticleList(generic.ListView):
         context = super().get_context_data(**kwargs)
 
         # if state is not defined then default to unread listing
-        print('get_context_data')
-        print(self.kwargs)
         context['state'] = self.kwargs.get('state') or 'unread'
 
         # see if any list ordering specified
@@ -136,7 +132,6 @@ class ArticleDeleteView(generic.DeleteView):
 
     def get_success_url(self):
         # make sure we go back to page that we were called from
-        print(self.request.POST)
         state = self.request.POST.get('state')
         return reverse('article_list_with_state', kwargs={'state': state})
 
@@ -156,7 +151,6 @@ class SettingsView(generic.base.TemplateView):
 
 class CategoryCreateView(generic.CreateView):
     model = Category
-    fields = ('name',)
     form_class = CategoryCreateForm
     success_url = reverse_lazy('settings')
     template_name_suffix = '_create_form'
@@ -164,7 +158,6 @@ class CategoryCreateView(generic.CreateView):
 
 class CategoryEditView(generic.UpdateView):
     model = Category
-    fields = ('name',)
     form_class = CategoryEditForm
     success_url = reverse_lazy('settings')
     template_name_suffix = '_edit_form'
@@ -174,9 +167,3 @@ class CategoryDeleteView(generic.DeleteView):
     model = Category
     success_url = reverse_lazy('settings')
     template_name_suffix = '_delete_form'
-
-    # def get_success_url(self):
-    #     # make sure we go back to page that we were called from
-    #     print(self.request.POST)
-    #     state = self.request.POST.get('state')
-    #     return reverse('article_list_with_state', kwargs={'state': state})

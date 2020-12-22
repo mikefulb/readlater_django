@@ -9,9 +9,14 @@ Delete Category
 {% endblock %}
 
 {% block content %}
+{% ifnotequal object.name|lower 'uncategorized' %}
 <form method="post">{% csrf_token %}
     <p>Are you sure you want to delete the category {{ object }}?</p>
     <input type="hidden" name="state" value="{{ request.GET.state }}">
     <input type="submit" value="Confirm">
 </form>
+{% else %}
+    <h4>Should not be able to delete category "Uncategorized" - this page was reached in error.</h4>
+    <a href="{% url 'settings' %}">Return to categories list</a>
+{% endifnotequal %}
 {% endblock content %}

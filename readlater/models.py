@@ -23,15 +23,6 @@ class Category(models.Model):
         return f'{self.name}'
 
 
-# class ArticleManager(models.Manager):
-#
-#     def get_max_rank(self):
-#         """ Return maximum rank value. """
-#         query_set = self.get_queryset()
-#
-#         return query_set.aggregate(Max('rank'))['rank__max']
-
-
 class Article(models.Model):
     """
     Model definition for an article to be read later.
@@ -52,7 +43,7 @@ class Article(models.Model):
     name = models.CharField(max_length=100, unique=True, help_text='Name of article.')
     notes = models.CharField(max_length=100, blank=True, help_text='Notes about article.')
     url = models.URLField(max_length=200, help_text='URL for article.')
-    category = models.ForeignKey(Category, related_name='articvle', on_delete=models.CASCADE,
+    category = models.ForeignKey(Category, related_name='article', on_delete=models.SET(1),
                                  help_text='Article category.')
     priority = models.IntegerField(choices=PRIORITY_CHOICES, default=PRIORITY_NORMAL, help_text='Article priority.')
     progress = models.IntegerField(default=0,
@@ -64,7 +55,6 @@ class Article(models.Model):
                                          help_text='Timestamp for when article was finished.')
     updated_time = models.DateTimeField(null=True, blank=True, editable=False,
                                         help_text='Timestamp for when progress was updated.')
-    #objects = ArticleManager()
 
     def get_absolute_url(self):
         """ Default URL for display contents. """
