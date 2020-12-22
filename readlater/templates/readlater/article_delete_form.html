@@ -9,8 +9,6 @@ Delete Article
 {% endblock %}
 
 {% block content %}
-
-<td><a href="{% url 'category_delete_form' category.pk %}">DELETE</a></td>
     <form method="post">{% csrf_token %}
     <p>Are you sure you want to delete the article {{ object }}?</p>
     <input type="hidden" name="state" value="{{ request.GET.state }}">
