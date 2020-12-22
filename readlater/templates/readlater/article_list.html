@@ -22,6 +22,8 @@ Article List
 {% endblock %}
 
 {% block content %}
+<a href="{% url 'article_create_form' %}">Create Article</a>
+
 {% if article_list %}
 <table class="table table-striped">
   <thead class="thead-dark">
