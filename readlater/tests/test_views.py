@@ -112,7 +112,7 @@ class ArticleCreateNewViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'readlater/article_create_form.html')
 
-    def test_form_valid_data(self):
+    def test_article_create_form_valid_data(self):
         categ = Category.objects.get(id=1)
         form = ArticleCreateForm(dict(name='Article',
                                       notes='Note',
@@ -121,7 +121,7 @@ class ArticleCreateNewViewTest(TestCase):
                                       priority=0))
         self.assertTrue(form.is_valid())
 
-    def test_form_invalid_name_data(self):
+    def test_article_create_form_invalid_name_data(self):
         categ = Category.objects.get(id=1)
         form = ArticleCreateForm(dict(name='A'*101,
                                       notes='Note',
@@ -130,7 +130,7 @@ class ArticleCreateNewViewTest(TestCase):
                                       priority=0))
         self.assertFalse(form.is_valid())
 
-    def test_form_invalid_notes_data(self):
+    def test_article_create_form_invalid_notes_data(self):
         categ = Category.objects.get(id=1)
         form = ArticleCreateForm(dict(name='A'*100,
                                       notes='N'*101,
@@ -140,7 +140,7 @@ class ArticleCreateNewViewTest(TestCase):
         self.assertFalse(form.is_valid())
 
 
-    def test_form_invalid_url_data(self):
+    def test_article_create_form_invalid_url_data(self):
         categ = Category.objects.get(id=1)
         form = ArticleCreateForm(dict(name='A' * 100,
                                       notes='N' * 100,
@@ -149,7 +149,7 @@ class ArticleCreateNewViewTest(TestCase):
                                       priority=0))
         self.assertFalse(form.is_valid())
 
-    def test_form_invalid_priority_data(self):
+    def test_article_create_form_invalid_priority_data(self):
         categ = Category.objects.get(id=1)
         form = ArticleCreateForm(dict(name='A' * 100,
                                       notes='N' * 100,
@@ -158,7 +158,7 @@ class ArticleCreateNewViewTest(TestCase):
                                       priority=-1000))
         self.assertFalse(form.is_valid())
 
-    def test_form_valid_post(self):
+    def test_article_create_form_valid_post(self):
         response = self.client.post(reverse('article_create_form'),
                                     data={'name': 'Article',
                                             'notes': 'Notes',
@@ -183,7 +183,7 @@ class ArticleEditViewTest(TestCase):
                                priority=200,
                                progress=10)
 
-    def test_article_create_edit_url_exists(self):
+    def test_article_edit_url_exists(self):
         response = self.client.get('/readlater/article/edit/1')
 
         # test that 'Read' is a link to the read page from the unread page
@@ -193,12 +193,12 @@ class ArticleEditViewTest(TestCase):
         response = self.client.get(reverse('article_edit_form', kwargs={'pk': 1}))
         self.assertContains(response, '<h4>Edit Article</h4>', status_code=200)
 
-    def test_article_create_edit_uses_correct_template(self):
+    def test_article_edit_uses_correct_template(self):
         response = self.client.get('/readlater/article/edit/1')
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'readlater/article_edit_form.html')
 
-    def test_form_valid_data(self):
+    def test_article_edit_form_valid_data(self):
         categ = Category.objects.get(id=1)
         form = ArticleEditForm(dict(name='Article',
                                     notes='Note',
@@ -208,7 +208,7 @@ class ArticleEditViewTest(TestCase):
                                     progress=50))
         self.assertTrue(form.is_valid())
 
-    def test_form_invalid_name_data(self):
+    def test_article_edit_form_invalid_name_data(self):
         categ = Category.objects.get(id=1)
         form = ArticleEditForm(dict(name='A'*101,
                                       notes='Note',
@@ -218,7 +218,7 @@ class ArticleEditViewTest(TestCase):
                                       progress=50))
         self.assertFalse(form.is_valid())
 
-    def test_form_invalid_notes_data(self):
+    def test_article_edit_form_invalid_notes_data(self):
         categ = Category.objects.get(id=1)
         form = ArticleEditForm(dict(name='A'*100,
                                       notes='N'*101,
@@ -228,7 +228,7 @@ class ArticleEditViewTest(TestCase):
                                       progress=50))
         self.assertFalse(form.is_valid())
 
-    def test_form_invalid_url_data(self):
+    def test_article_edit_form_invalid_url_data(self):
         categ = Category.objects.get(id=1)
         form = ArticleEditForm(dict(name='A' * 100,
                                       notes='N' * 100,
@@ -238,7 +238,7 @@ class ArticleEditViewTest(TestCase):
                                       progress=50))
         self.assertFalse(form.is_valid())
 
-    def test_form_invalid_priority_data(self):
+    def test_article_edit_form_invalid_priority_data(self):
         categ = Category.objects.get(id=1)
         form = ArticleEditForm(dict(name='A' * 100,
                                       notes='N' * 100,
@@ -248,7 +248,7 @@ class ArticleEditViewTest(TestCase):
                                       progress=50))
         self.assertFalse(form.is_valid())
 
-    def test_form_invalid_progress_data(self):
+    def test_article_edit_form_invalid_progress_data(self):
         categ = Category.objects.get(id=1)
         form = ArticleEditForm(dict(name='A' * 100,
                                       notes='N' * 100,
@@ -266,7 +266,7 @@ class ArticleEditViewTest(TestCase):
                                     progress=500))
         self.assertFalse(form.is_valid())
 
-    def test_form_valid_post(self):
+    def test_article_edit_form_valid_post(self):
         for state in ['unread', 'read']:
             url = reverse('article_edit_form', args=(1,))
             response = self.client.post(url + '?' + urlencode({'state': state}),
@@ -279,6 +279,51 @@ class ArticleEditViewTest(TestCase):
                                               }, follow=True)
             self.assertEqual(response.status_code, 200)
             self.assertRedirects(response, reverse('article_list_with_state', args=(state,)))
+
+
+class ArticleDeleteViewTest(TestCase):
+
+    @classmethod
+    def setUp(cls):
+        Category.objects.create(name=f'Category {1}')
+
+        # skip over the uncategorized category record created in migration
+        categ = Category.objects.get(id=2)
+        Article.objects.create(name=f'Article 1',
+                               category=categ,
+                               priority=200,
+                               progress=10)
+
+    def test_article_delete_url_exists(self):
+        response = self.client.get('/readlater/article/delete/1')
+
+        # test that 'Read' is a link to the read page from the unread page
+        self.assertContains(response, '<h4>Delete Article</h4>', status_code=200)
+
+        # also test using name
+        response = self.client.get(reverse('article_delete_form', kwargs={'pk': 1}))
+        self.assertContains(response, '<h4>Delete Article</h4>', status_code=200)
+
+    def test_article_delete_uses_correct_template(self):
+        response = self.client.get('/readlater/article/delete/1')
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'readlater/article_delete_form.html')
+
+    def send_delete_post(self, state):
+        self.assertEqual(len(Article.objects.all()), 1)
+        url = reverse('article_delete_form', args=(1,))
+        response = self.client.post(url + '?' + urlencode({'state': state}),
+                                    data={'state': state
+                                         }, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertRedirects(response, reverse('article_list_with_state', args=(state,)))
+        self.assertEqual(len(Article.objects.all()), 0)
+
+    def test_article_delete_form_state_unread_valid_post(self):
+        self.send_delete_post('unread')
+
+    def test_article_delete_form_state_unread_valid_post(self):
+        self.send_delete_post('read')
 
 
 class SettingsViewTest(TestCase):

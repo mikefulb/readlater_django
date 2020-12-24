@@ -92,16 +92,6 @@ class ArticleCreateView(generic.CreateView):
     form_class = ArticleCreateForm
     template_name_suffix = '_create_form'
 
-    # def form_valid(self, form):
-    #     """ Add values to instance before saving """
-    #     self.object = form.save(commit=False)
-    #
-    #     # set rank to largest value plus spacing between entries
-    #     rank_max = self.model.objects.get_max_rank()
-    #     self.object.rank = rank_max + RANK_SPACING
-    #     self.object.save()
-    #     return super().form_valid(form)
-
 
 class ArticleEditView(generic.UpdateView):
     model = Article
