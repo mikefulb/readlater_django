@@ -111,9 +111,9 @@ class ArticleEditView(generic.UpdateView):
     def form_valid(self, form):
         """ Add values to instance before saving """
         self.object = form.save(commit=False)
-        self.object.updated_time = datetime.datetime.now()
+        self.object.updated_time = datetime.datetime.now(tz=datetime.timezone.utc)
         if self.object.progress == 100:
-            self.object.finished_time = datetime.datetime.now()
+            self.object.finished_time = datetime.datetime.now(tz=datetime.timezone.utc)
         else:
             self.object.finished_time = None
 
