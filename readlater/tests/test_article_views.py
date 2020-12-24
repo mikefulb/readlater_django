@@ -86,7 +86,7 @@ class ArticleListViewTest(TestCase):
 
 class ArticleCreateNewViewTest(TestCase):
 
-    def test_article_create_edit_url_exists(self):
+    def test_article_create_url_exists(self):
         response = self.client.get('/readlater/article/create/new')
 
         # test that 'Read' is a link to the read page from the unread page
@@ -96,7 +96,7 @@ class ArticleCreateNewViewTest(TestCase):
         response = self.client.get(reverse('article_create_form'))
         self.assertContains(response, '<h4>Create Article</h4>', status_code=200)
 
-    def test_article_create_edit_uses_correct_template(self):
+    def test_article_create_uses_correct_template(self):
         response = self.client.get('/readlater/article/create/new')
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'readlater/article_create_form.html')
@@ -165,7 +165,7 @@ class ArticleEditViewTest(TestCase):
 
     @classmethod
     def setUp(cls):
-        Category.objects.create(name=f'Category {1}')
+        Category.objects.create(name='Category 1')
 
         # skip over the uncategorized category record created in migration
         categ = Category.objects.get(id=2)
