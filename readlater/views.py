@@ -1,8 +1,10 @@
 import datetime
 
-from django.http import Http404
+from django.http import Http404, HttpResponseRedirect, HttpResponseForbidden
+from django.shortcuts import render
 from django.views import generic
 from django.urls import reverse_lazy, reverse
+from django.db.models import ProtectedError
 
 from .models import Article
 from .models import Category
@@ -156,4 +158,12 @@ class CategoryEditView(generic.UpdateView):
 class CategoryDeleteView(generic.DeleteView):
     model = Category
     success_url = reverse_lazy('settings')
+    error_url = reverse_lazy('category_delete_failed.html')
     template_name_suffix = '_delete_form'
+
+    def delete(self, request, *args, **kwargs):
+        del_object = self.get_object()
+        if del_object.name == 'Uncategorized':
+            return HttpResponseForbidden(b'Deleting "Uncategorized" category is not allowed.')
+        else:
+            return super().delete(self, request, *args, **kwargs)

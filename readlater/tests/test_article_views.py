@@ -86,17 +86,6 @@ class ArticleListViewTest(TestCase):
 
 class ArticleCreateNewViewTest(TestCase):
 
-    @classmethod
-    def setUpTestData(cls):
-        Category.objects.create(name=f'Category {1}')
-
-        # skip over the uncategorized category record created in migration
-        categ = Category.objects.get(id=2)
-        Article.objects.create(name=f'Article 1',
-                               category=categ,
-                               priority=200,
-                               progress=10)
-
     def test_article_create_edit_url_exists(self):
         response = self.client.get('/readlater/article/create/new')
 
@@ -173,7 +162,7 @@ class ArticleCreateNewViewTest(TestCase):
 class ArticleEditViewTest(TestCase):
 
     @classmethod
-    def setUpTestData(cls):
+    def setUp(cls):
         Category.objects.create(name=f'Category {1}')
 
         # skip over the uncategorized category record created in migration
@@ -280,12 +269,15 @@ class ArticleEditViewTest(TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertRedirects(response, reverse('article_list_with_state', args=(state,)))
 
+            art = Article.objects.get(name='Article')
+            self.assertEqual(art.progress, 50)
+
 
 class ArticleDeleteViewTest(TestCase):
 
     @classmethod
     def setUp(cls):
-        Category.objects.create(name=f'Category {1}')
+        Category.objects.create(name='Category 1')
 
         # skip over the uncategorized category record created in migration
         categ = Category.objects.get(id=2)
@@ -313,8 +305,7 @@ class ArticleDeleteViewTest(TestCase):
         self.assertEqual(len(Article.objects.all()), 1)
         url = reverse('article_delete_form', args=(1,))
         response = self.client.post(url + '?' + urlencode({'state': state}),
-                                    data={'state': state
-                                         }, follow=True)
+                                    data={'state': state}, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertRedirects(response, reverse('article_list_with_state', args=(state,)))
         self.assertEqual(len(Article.objects.all()), 0)
@@ -322,5 +313,5 @@ class ArticleDeleteViewTest(TestCase):
     def test_article_delete_form_state_unread_valid_post(self):
         self.send_delete_post('unread')
 
-    def test_article_delete_form_state_unread_valid_post(self):
+    def test_article_delete_form_state_read_valid_post(self):
         self.send_delete_post('read')
