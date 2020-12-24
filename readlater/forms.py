@@ -1,4 +1,6 @@
 from django import forms
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
 
 from .models import Article, Category
 
@@ -12,6 +14,8 @@ class ArticleCreateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.helper = FormHelper(self)
+
         # order category field options by name
         self.fields['category'].queryset = self.fields['category'].queryset.order_by('name')
 
@@ -24,6 +28,8 @@ class ArticleEditForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
 
         # order category field options by name
         self.fields['category'].queryset = self.fields['category'].queryset.order_by('name')

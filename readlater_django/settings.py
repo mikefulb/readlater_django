@@ -126,12 +126,22 @@ logging.config.dictConfig({
             'class': 'logging.StreamHandler',
             'formatter': 'console',
         },
+        # 'file': {
+        #     'level': 'DEBUG',
+        #     'class': 'logging.FileHandler',
+        #     'filename': 'debug.log',
+        # },
     },
     'loggers': {
         '': {
             'level': LOGLEVEL,
             'handlers': ['console',],
         },
+        # 'django': {
+        #     'handlers': ['file'],
+        #     'level': 'DEBUG',
+        #     'propagate': True,
+        # },
     },
 })
 
