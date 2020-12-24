@@ -148,15 +148,17 @@ class ArticleCreateNewViewTest(TestCase):
         self.assertFalse(form.is_valid())
 
     def test_article_create_form_valid_post(self):
+        self.assertEqual(len(Article.objects.all()), 0)
         response = self.client.post(reverse('article_create_form'),
                                     data={'name': 'Article',
-                                            'notes': 'Notes',
-                                            'url': 'http://this.org/index.html',
-                                            'category': 1,
-                                            'priority': 200,
-                                            }, follow=True)
+                                          'notes': 'Notes',
+                                          'url': 'http://this.org/index.html',
+                                          'category': 1,
+                                          'priority': 200,
+                                          }, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertRedirects(response, reverse('article_list'))
+        self.assertEqual(len(Article.objects.all()), 1)
 
 
 class ArticleEditViewTest(TestCase):
