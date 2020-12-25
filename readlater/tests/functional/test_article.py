@@ -222,6 +222,21 @@ class ArticleListTestCase(FunctionalTestBase, StaticLiveServerTestCase):
         self.assertEqual(name_ele.get_attribute('type'), 'text')
         self.assertEqual(name_ele.get_attribute('maxlength'), '100')
 
+        # parse index in creation list from article name
+        # FIXME need more robust way to parse number
+        art_name = name_ele.get_attribute('value')
+        self.assertIn('Article', art_name)
+        index = int(art_name[7:])
+        self.assertTrue(isinstance(index, int))
+
+        # self.assertEqual(cols[0].text, 'LINK')
+        # self.assertEqual(cols[1].text, f'Article {isort}')
+        # self.assertEqual(cols[2].text, )
+        # self.assertEqual(cols[3].text, f'Note {isort}')
+        # self.assertEqual(cols[4].text, f'{self.PRIORITIES[isort % self.NUM_CATEGORIES]}')
+        # self.assertEqual(cols[5].text, f'{progress}')  # f'{(isort * 10) % 101}')
+        # FIXME Test values for form element values should come from
+        #       a common function instead of these duplicated equations
         url_ele = self.selenium.find_element_by_name('url')
         self.assertIsNotNone(url_ele)
         self.assertEqual(url_ele.tag_name, 'input')
@@ -232,6 +247,9 @@ class ArticleListTestCase(FunctionalTestBase, StaticLiveServerTestCase):
         self.assertIsNotNone(cat_ele)
         self.assertEqual(cat_ele.tag_name, 'select')
         option_eles = cat_ele.find_elements_by_tag_name('option')
+        #selected = [i for i, x in enumerate(option_eles) if x.get_attribute('selected') is not None]
+        selected = next(filter(None, (i for i, x in enumerate(option_eles) if x.get_attribute('selected') is not None)))
+        self.assertEqual(f'Category {index % self.NUM_CATEGORIES}', option_eles[selected].text)
 
         # test number of categories offered - including the '------'
         # and 'Uncategories' options in additon to NUM_CATEGORIES
