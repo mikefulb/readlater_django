@@ -72,6 +72,11 @@ class ArticleListTestCase(FunctionalTestBase, StaticLiveServerTestCase):
     READ_CATEGORY_SORT_ARGS = [10, 15, 11, 12, 13, 14]
     READ_PROGRESS_SORT_ARGS = [10, 15, 11, 12, 13, 14]
 
+    # TODO Need to make functions for generating record values (article, note, etc) from the
+    #      pk in the database so it is algorithmically possible to generate a record
+    #      given a pk and also find the pk given a record.  Currently everything is hard
+    #      coded or duplicated so maintenance would be more difficult than it should be.
+
     def _create_article_list(self):
         for categ_id in range(self.NUM_CATEGORIES):
             Category.objects.create(name=f'Category {categ_id}')
@@ -157,6 +162,7 @@ class ArticleListTestCase(FunctionalTestBase, StaticLiveServerTestCase):
         url = urljoin(self.live_server_url, reverse('article_list'))
         self.selenium.get(url)
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
+
         # test default is priority sorting
         self._check_article_list_ordering(self.UNREAD_PRIORITY_SORT_ARGS, self.NUM_UNREAD_ARTICLES, 'unread')
 
@@ -194,3 +200,61 @@ class ArticleListTestCase(FunctionalTestBase, StaticLiveServerTestCase):
         cat_col_header.click()
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
         self._check_article_list_ordering(self.READ_CATEGORY_SORT_ARGS, self.NUM_READ_ARTICLES, 'read')
+
+    def test_load_article_edit_article(self):
+        self._create_article_list()
+        url = urljoin(self.live_server_url, reverse('article_list'))
+        self.selenium.get(url)
+        self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
+
+        # find edit link for 1st article and click
+        tbody = self.selenium.find_element_by_tag_name('tbody')
+        rows = tbody.find_elements_by_tag_name('tr')
+        edit_link = rows[0].find_element_by_link_text('EDIT')
+        edit_link.click()
+        self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
+
+        # check fields
+        # TODO Need to check order of fields in form as well as just the presence of proper fields
+        name_ele = self.selenium.find_element_by_name('name')
+        self.assertIsNotNone(name_ele)
+        self.assertEqual(name_ele.tag_name, 'input')
+        self.assertEqual(name_ele.get_attribute('type'), 'text')
+        self.assertEqual(name_ele.get_attribute('maxlength'), '100')
+
+        url_ele = self.selenium.find_element_by_name('url')
+        self.assertIsNotNone(url_ele)
+        self.assertEqual(url_ele.tag_name, 'input')
+        self.assertEqual(url_ele.get_attribute('type'), 'url')
+        self.assertEqual(url_ele.get_attribute('maxlength'), '200')
+
+        cat_ele = self.selenium.find_element_by_name('category')
+        self.assertIsNotNone(cat_ele)
+        self.assertEqual(cat_ele.tag_name, 'select')
+        option_eles = cat_ele.find_elements_by_tag_name('option')
+
+        # test number of categories offered - including the '------'
+        # and 'Uncategories' options in additon to NUM_CATEGORIES
+        # created in _create_article_list()
+        self.assertEqual(len(option_eles), self.NUM_CATEGORIES+2)
+
+        pri_ele = self.selenium.find_element_by_name('priority')
+        self.assertIsNotNone(pri_ele)
+        self.assertEqual(pri_ele.tag_name, 'select')
+        option_eles = pri_ele.find_elements_by_tag_name('option')
+
+        # test number of categories offered - including the '------'
+        # and 'Uncategories' options in additon to NUM_CATEGORIES
+        # created in _create_article_list()
+        self.assertEqual(len(option_eles),  len(self.PRIORITIES))
+
+        prog_ele = self.selenium.find_element_by_name('progress')
+        self.assertIsNotNone(prog_ele)
+        self.assertEqual(prog_ele.tag_name, 'input')
+        self.assertEqual(prog_ele.get_attribute('type'), 'number')
+
+        notes_ele = self.selenium.find_element_by_name('notes')
+        self.assertIsNotNone(notes_ele)
+        self.assertEqual(notes_ele.tag_name, 'input')
+        self.assertEqual(notes_ele.get_attribute('type'), 'text')
+        self.assertEqual(notes_ele.get_attribute('maxlength'), '100')
