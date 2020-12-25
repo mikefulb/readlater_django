@@ -20,7 +20,7 @@ class ArticleList(generic.ListView):
 
     _order_hier = {
             'priority': ('priority',  '-progress'),
-            'category': ('-category', 'priority', 'updated_time', '-added_time', '-progress'),
+            'category': ('category', 'priority', 'updated_time', '-added_time', '-progress'),
             'progress': ('-progress', 'priority', 'updated_time', '-added_time', '-category'),
     }
 
