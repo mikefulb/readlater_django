@@ -1,10 +1,9 @@
 from datetime import datetime, timezone
-from datetime import tzinfo
 
 from django.test import TestCase
 from django.urls import reverse
 
-from ..models import Article, Category
+from readlater.models import Article, Category
 
 
 class CategoryModelTest(TestCase):

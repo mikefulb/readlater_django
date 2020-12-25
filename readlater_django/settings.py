@@ -135,7 +135,7 @@ logging.config.dictConfig({
     'loggers': {
         '': {
             'level': LOGLEVEL,
-            'handlers': ['console',],
+            'handlers': ['console', ],
         },
         # 'django': {
         #     'handlers': ['file'],

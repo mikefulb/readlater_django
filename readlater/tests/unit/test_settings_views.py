@@ -6,8 +6,8 @@ logger.setLevel(logging.DEBUG)
 from django.urls import reverse
 from django.test import TestCase
 
-from ..models import Article, Category
-from ..forms import CategoryCreateForm, CategoryEditForm
+from ...models import Category
+from ...forms import CategoryCreateForm, CategoryEditForm
 
 #
 # For these tests it is important to remember the Category model has
@@ -85,7 +85,7 @@ class CategoryCreateNewViewTest(TestCase):
 class CategoryEditViewTest(TestCase):
 
     @classmethod
-    def setUp(self):
+    def setUp(cls):
         Category.objects.create(name='Category 1')
 
     def test_category_edit_url_exists(self):
@@ -119,11 +119,10 @@ class CategoryEditViewTest(TestCase):
         self.assertRedirects(response, reverse('settings'))
 
 
-
 class CategoryDeleteViewTest(TestCase):
 
     @classmethod
-    def setUp(self):
+    def setUp(cls):
         Category.objects.create(name='Category 1')
 
     def test_category_delete_url_exists(self):

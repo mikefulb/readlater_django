@@ -1,10 +1,8 @@
 import datetime
 
-from django.http import Http404, HttpResponseRedirect, HttpResponseForbidden
-from django.shortcuts import render
+from django.http import Http404, HttpResponseForbidden
 from django.views import generic
 from django.urls import reverse_lazy, reverse
-from django.db.models import ProtectedError
 
 from .models import Article
 from .models import Category

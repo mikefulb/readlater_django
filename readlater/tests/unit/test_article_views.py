@@ -1,4 +1,5 @@
 import logging
+
 logger = logging.getLogger(__name__)
 logging.disable(logging.NOTSET)
 logger.setLevel(logging.DEBUG)
@@ -7,8 +8,8 @@ from django.urls import reverse
 from django.utils.http import urlencode
 from django.test import TestCase
 
-from ..models import Article, Category
-from ..forms import ArticleCreateForm, ArticleEditForm
+from ...models import Article, Category
+from ...forms import ArticleCreateForm, ArticleEditForm
 
 
 class ArticleListViewTest(TestCase):
@@ -26,8 +27,8 @@ class ArticleListViewTest(TestCase):
             art_categ = Category.objects.get(id=categ_id)
             Article.objects.create(name=f'Article {article_id}',
                                    category=art_categ,
-                                   priority=article_id*100,
-                                   progress=article_id*10)
+                                   priority=article_id * 100,
+                                   progress=article_id * 10)
             categ_id += 1
             if categ_id == (ArticleListViewTest.NUM_CATEGORIES + 2):
                 categ_id = 2
@@ -112,7 +113,7 @@ class ArticleCreateNewViewTest(TestCase):
 
     def test_article_create_form_invalid_name_data(self):
         categ = Category.objects.get(id=1)
-        form = ArticleCreateForm(dict(name='A'*101,
+        form = ArticleCreateForm(dict(name='A' * 101,
                                       notes='Note',
                                       url='http://this.is.url.org',
                                       category=categ,
@@ -121,13 +122,12 @@ class ArticleCreateNewViewTest(TestCase):
 
     def test_article_create_form_invalid_notes_data(self):
         categ = Category.objects.get(id=1)
-        form = ArticleCreateForm(dict(name='A'*100,
-                                      notes='N'*101,
+        form = ArticleCreateForm(dict(name='A' * 100,
+                                      notes='N' * 101,
                                       url='http://this.is.url.org',
                                       category=categ,
                                       priority=0))
         self.assertFalse(form.is_valid())
-
 
     def test_article_create_form_invalid_url_data(self):
         categ = Category.objects.get(id=1)
@@ -201,52 +201,52 @@ class ArticleEditViewTest(TestCase):
 
     def test_article_edit_form_invalid_name_data(self):
         categ = Category.objects.get(id=1)
-        form = ArticleEditForm(dict(name='A'*101,
-                                      notes='Note',
-                                      url='http://this.is.url.org',
-                                      category=categ,
-                                      priority=0,
-                                      progress=50))
+        form = ArticleEditForm(dict(name='A' * 101,
+                                    notes='Note',
+                                    url='http://this.is.url.org',
+                                    category=categ,
+                                    priority=0,
+                                    progress=50))
         self.assertFalse(form.is_valid())
 
     def test_article_edit_form_invalid_notes_data(self):
         categ = Category.objects.get(id=1)
-        form = ArticleEditForm(dict(name='A'*100,
-                                      notes='N'*101,
-                                      url='http://this.is.url.org',
-                                      category=categ,
-                                      priority=0,
-                                      progress=50))
+        form = ArticleEditForm(dict(name='A' * 100,
+                                    notes='N' * 101,
+                                    url='http://this.is.url.org',
+                                    category=categ,
+                                    priority=0,
+                                    progress=50))
         self.assertFalse(form.is_valid())
 
     def test_article_edit_form_invalid_url_data(self):
         categ = Category.objects.get(id=1)
         form = ArticleEditForm(dict(name='A' * 100,
-                                      notes='N' * 100,
-                                      url='this is not a url',
-                                      category=categ,
-                                      priority=0,
-                                      progress=50))
+                                    notes='N' * 100,
+                                    url='this is not a url',
+                                    category=categ,
+                                    priority=0,
+                                    progress=50))
         self.assertFalse(form.is_valid())
 
     def test_article_edit_form_invalid_priority_data(self):
         categ = Category.objects.get(id=1)
         form = ArticleEditForm(dict(name='A' * 100,
-                                      notes='N' * 100,
-                                      url='http://this.is.url.org',
-                                      category=categ,
-                                      priority=-1000,
-                                      progress=50))
+                                    notes='N' * 100,
+                                    url='http://this.is.url.org',
+                                    category=categ,
+                                    priority=-1000,
+                                    progress=50))
         self.assertFalse(form.is_valid())
 
     def test_article_edit_form_invalid_progress_data(self):
         categ = Category.objects.get(id=1)
         form = ArticleEditForm(dict(name='A' * 100,
-                                      notes='N' * 100,
-                                      url='http://this.is.url.org',
-                                      category=categ,
-                                      priority=200,
-                                      progress=-500))
+                                    notes='N' * 100,
+                                    url='http://this.is.url.org',
+                                    category=categ,
+                                    priority=200,
+                                    progress=-500))
         self.assertFalse(form.is_valid())
 
         form = ArticleEditForm(dict(name='A' * 100,
