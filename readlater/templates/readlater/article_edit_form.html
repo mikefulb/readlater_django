@@ -14,6 +14,6 @@ Edit Article
 <form method="post">
     {% csrf_token %}
     {{ form|crispy }}
-    <tr><td><input type="submit" value="Save" class="btn btn-success"></td></tr>
+    <input type="submit" value="Save" class="btn btn-success">
 </form>
 {% endblock content %}
