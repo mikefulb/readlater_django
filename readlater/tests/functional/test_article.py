@@ -82,10 +82,6 @@ class ArticleListTestCase(FunctionalTestBase, StaticLiveServerTestCase):
     MAX_NOTES_LEN = 100
     MAX_URL_LEN = 400
 
-    # causes database to be restored to post-migrate state for
-    # each test instead of being flushed
-    #serialized_rollback = True
-
     @staticmethod
     def _create_article_name(index):
         return f'Article {index}'
