@@ -22,16 +22,13 @@ class ArticleListViewTest(TestCase):
             Category.objects.create(name=f'Category {categ_id}')
 
         # skip over the uncategorized category record created in migration
-        categ_id = 2
+        categ_id = 0
         for article_id in range(ArticleListViewTest.NUM_ARTICLES):
-            art_categ = Category.objects.get(id=categ_id)
+            art_categ = Category.objects.get(name=f'Category {categ_id % ArticleListViewTest.NUM_CATEGORIES}')
             Article.objects.create(name=f'Article {article_id}',
                                    category=art_categ,
                                    priority=article_id * 100,
                                    progress=article_id * 10)
-            categ_id += 1
-            if categ_id == (ArticleListViewTest.NUM_CATEGORIES + 2):
-                categ_id = 2
 
     def test_view_url_exists(self):
         # FIXME need to add some finished articles and verify only those
@@ -87,6 +84,14 @@ class ArticleListViewTest(TestCase):
 
 class ArticleCreateNewViewTest(TestCase):
 
+    MAX_NAME_LEN = 100
+    MAX_NOTES_LEN = 100
+    MAX_URL_LEN = 400
+
+    @classmethod
+    def setUpTestData(cls):
+        Category.objects.create(name='Category')
+
     def test_article_create_url_exists(self):
         response = self.client.get('/readlater/article/create/new')
 
@@ -103,7 +108,7 @@ class ArticleCreateNewViewTest(TestCase):
         self.assertTemplateUsed(response, 'readlater/article_create_form.html')
 
     def test_article_create_form_valid_data(self):
-        categ = Category.objects.get(id=1)
+        categ = Category.objects.get(name='Category')
         form = ArticleCreateForm(dict(name='Article',
                                       notes='Note',
                                       url='http://this.is.url.org',
@@ -112,8 +117,8 @@ class ArticleCreateNewViewTest(TestCase):
         self.assertTrue(form.is_valid())
 
     def test_article_create_form_invalid_name_data(self):
-        categ = Category.objects.get(id=1)
-        form = ArticleCreateForm(dict(name='A' * 101,
+        categ = Category.objects.get(name='Category')
+        form = ArticleCreateForm(dict(name='A' * (self.MAX_NAME_LEN+1),
                                       notes='Note',
                                       url='http://this.is.url.org',
                                       category=categ,
@@ -121,27 +126,33 @@ class ArticleCreateNewViewTest(TestCase):
         self.assertFalse(form.is_valid())
 
     def test_article_create_form_invalid_notes_data(self):
-        categ = Category.objects.get(id=1)
-        form = ArticleCreateForm(dict(name='A' * 100,
-                                      notes='N' * 101,
+        categ = Category.objects.get(name='Category')
+        form = ArticleCreateForm(dict(name='A' * self.MAX_NAME_LEN,
+                                      notes='N' * (self.MAX_NOTES_LEN+1),
                                       url='http://this.is.url.org',
                                       category=categ,
                                       priority=0))
         self.assertFalse(form.is_valid())
 
     def test_article_create_form_invalid_url_data(self):
-        categ = Category.objects.get(id=1)
-        form = ArticleCreateForm(dict(name='A' * 100,
-                                      notes='N' * 100,
+        categ = Category.objects.get(name='Category')
+        form = ArticleCreateForm(dict(name='A' * self.MAX_NAME_LEN,
+                                      notes='N' * self.MAX_NOTES_LEN,
                                       url='this is not a url',
+                                      category=categ,
+                                      priority=0))
+        self.assertFalse(form.is_valid())
+        form = ArticleCreateForm(dict(name='A' * self.MAX_NAME_LEN,
+                                      notes='N' * self.MAX_NOTES_LEN,
+                                      url='http://this.is.url.org/' + 'A' * (self.MAX_URL_LEN+1),
                                       category=categ,
                                       priority=0))
         self.assertFalse(form.is_valid())
 
     def test_article_create_form_invalid_priority_data(self):
-        categ = Category.objects.get(id=1)
-        form = ArticleCreateForm(dict(name='A' * 100,
-                                      notes='N' * 100,
+        categ = Category.objects.get(name='Category')
+        form = ArticleCreateForm(dict(name='A' * self.MAX_NAME_LEN,
+                                      notes='N' * self.MAX_NOTES_LEN,
                                       url='http://this.is.url.org',
                                       category=categ,
                                       priority=-1000))
@@ -166,9 +177,10 @@ class ArticleEditViewTest(TestCase):
     @classmethod
     def setUp(cls):
         Category.objects.create(name='Category 1')
+        Category.objects.create(name='Category 2')
 
         # skip over the uncategorized category record created in migration
-        categ = Category.objects.get(id=2)
+        categ = Category.objects.get(name='Category 1')
         Article.objects.create(name=f'Article 1',
                                category=categ,
                                priority=200,
@@ -190,7 +202,7 @@ class ArticleEditViewTest(TestCase):
         self.assertTemplateUsed(response, 'readlater/article_edit_form.html')
 
     def test_article_edit_form_valid_data(self):
-        categ = Category.objects.get(id=1)
+        categ = Category.objects.get(name='Category 2')
         form = ArticleEditForm(dict(name='Article',
                                     notes='Note',
                                     url='http://this.is.url.org',
@@ -200,7 +212,8 @@ class ArticleEditViewTest(TestCase):
         self.assertTrue(form.is_valid())
 
     def test_article_edit_form_invalid_name_data(self):
-        categ = Category.objects.get(id=1)
+        categ = Category.objects.get(name='Category 2')
+
         form = ArticleEditForm(dict(name='A' * 101,
                                     notes='Note',
                                     url='http://this.is.url.org',
@@ -210,7 +223,8 @@ class ArticleEditViewTest(TestCase):
         self.assertFalse(form.is_valid())
 
     def test_article_edit_form_invalid_notes_data(self):
-        categ = Category.objects.get(id=1)
+        categ = Category.objects.get(name='Category 2')
+
         form = ArticleEditForm(dict(name='A' * 100,
                                     notes='N' * 101,
                                     url='http://this.is.url.org',
@@ -220,7 +234,8 @@ class ArticleEditViewTest(TestCase):
         self.assertFalse(form.is_valid())
 
     def test_article_edit_form_invalid_url_data(self):
-        categ = Category.objects.get(id=1)
+        categ = Category.objects.get(name='Category 2')
+
         form = ArticleEditForm(dict(name='A' * 100,
                                     notes='N' * 100,
                                     url='this is not a url',
@@ -230,7 +245,8 @@ class ArticleEditViewTest(TestCase):
         self.assertFalse(form.is_valid())
 
     def test_article_edit_form_invalid_priority_data(self):
-        categ = Category.objects.get(id=1)
+        categ = Category.objects.get(name='Category 2')
+
         form = ArticleEditForm(dict(name='A' * 100,
                                     notes='N' * 100,
                                     url='http://this.is.url.org',
@@ -240,7 +256,8 @@ class ArticleEditViewTest(TestCase):
         self.assertFalse(form.is_valid())
 
     def test_article_edit_form_invalid_progress_data(self):
-        categ = Category.objects.get(id=1)
+        categ = Category.objects.get(name='Category 2')
+
         form = ArticleEditForm(dict(name='A' * 100,
                                     notes='N' * 100,
                                     url='http://this.is.url.org',
@@ -282,7 +299,7 @@ class ArticleDeleteViewTest(TestCase):
         Category.objects.create(name='Category 1')
 
         # skip over the uncategorized category record created in migration
-        categ = Category.objects.get(id=2)
+        categ = Category.objects.get(name='Category 1')
         Article.objects.create(name=f'Article 1',
                                category=categ,
                                priority=200,

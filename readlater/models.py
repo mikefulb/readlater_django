@@ -23,6 +23,15 @@ class Category(models.Model):
     def __str__(self):
         return f'{self.name}'
 
+    @staticmethod
+    def get_uncategorized():
+        """ Returns Category object for 'Uncategorized' category"""
+        return Category.objects.get_or_create(name='Uncategorized')[0]
+
+
+def set_article_uncategorized():
+    return Category.get_uncategorized()
+
 
 class Article(models.Model):
     """
@@ -44,7 +53,8 @@ class Article(models.Model):
     name = models.CharField(max_length=100, unique=True, help_text='Name of article.')
     notes = models.CharField(max_length=100, blank=True, help_text='Notes about article.')
     url = models.URLField(max_length=400, help_text='URL for article.')
-    category = models.ForeignKey(Category, related_name='article', on_delete=models.SET(1),
+    category = models.ForeignKey(Category, related_name='article',
+                                 on_delete=models.SET(set_article_uncategorized),
                                  help_text='Article category.')
     priority = models.IntegerField(choices=PRIORITY_CHOICES, default=PRIORITY_NORMAL, help_text='Article priority.')
     progress = models.IntegerField(default=0,

@@ -9,12 +9,7 @@ from django.test import TestCase
 from ...models import Category
 from ...forms import CategoryCreateForm, CategoryEditForm
 
-#
-# For these tests it is important to remember the Category model has
-# a record inserted during the migration step which has a name "Uncategorized".
-# This record is assumed to always exists and is used as a placeholder if the
-# user deletes a category that was being used by an article.
-#
+MAX_CATEG_LEN = 100
 
 
 class SettingsViewTest(TestCase):
@@ -46,7 +41,7 @@ class SettingsViewTest(TestCase):
 
         # check the number of items in categories list is number created plus one
         # for the uncategorized category created during migration step
-        self.assertTrue(len(response.context['category_list']) == SettingsViewTest.NUM_CATEGORIES+1)
+        self.assertTrue(len(response.context['category_list']) == SettingsViewTest.NUM_CATEGORIES)
 
 
 class CategoryCreateNewViewTest(TestCase):
@@ -70,16 +65,16 @@ class CategoryCreateNewViewTest(TestCase):
         self.assertTrue(form.is_valid())
 
     def test_category_create_form_invalid_name_data(self):
-        form = CategoryCreateForm({'name': 'A'*101})
+        form = CategoryCreateForm({'name': 'A'*(MAX_CATEG_LEN+1)})
         self.assertFalse(form.is_valid())
 
     def test_category_create_form_valid_post(self):
-        self.assertEqual(len(Category.objects.all()), 1)
+        self.assertEqual(len(Category.objects.all()), 0)
         response = self.client.post(reverse('category_create_form'),
                                     data={'name': 'Good category'}, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertRedirects(response, reverse('settings'))
-        self.assertEqual(len(Category.objects.all()), 2)
+        self.assertEqual(len(Category.objects.all()), 1)
 
 
 class CategoryEditViewTest(TestCase):
@@ -89,16 +84,17 @@ class CategoryEditViewTest(TestCase):
         Category.objects.create(name='Category 1')
 
     def test_category_edit_url_exists(self):
-        response = self.client.get('/readlater/category/edit/1')
-
+        categ_id = Category.objects.get(name='Category 1').id
+        response = self.client.get(f'/readlater/category/edit/{categ_id}')
         self.assertContains(response, '<h4>Edit Category</h4>', status_code=200)
 
         # also test using name
-        response = self.client.get(reverse('category_edit_form', kwargs={'pk': 2}))
+        response = self.client.get(reverse('category_edit_form', kwargs={'pk': categ_id}))
         self.assertContains(response, '<h4>Edit Category</h4>', status_code=200)
 
     def test_category_edit_uses_correct_template(self):
-        response = self.client.get('/readlater/category/edit/1')
+        categ_id = Category.objects.get(name='Category 1').id
+        response = self.client.get(f'/readlater/category/edit/{categ_id}')
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'readlater/category_edit_form.html')
 
@@ -107,14 +103,15 @@ class CategoryEditViewTest(TestCase):
         self.assertTrue(form.is_valid())
 
     def test_category_edit_form_invalid_name_data(self):
-        form = CategoryEditForm({'name': 'A'*101})
+        form = CategoryEditForm({'name': 'A' * (MAX_CATEG_LEN+1)})
         self.assertFalse(form.is_valid())
 
     def test_category_edit_form_valid_post(self):
-        response = self.client.post(reverse('category_edit_form', kwargs={'pk': 2}),
+        categ_id = Category.objects.get(name='Category 1').id
+        response = self.client.post(reverse('category_edit_form', kwargs={'pk': categ_id}),
                                     data={'name': 'Good category'}, follow=True)
-        categ = Category.objects.get(id=2)
-        self.assertEqual(categ.name, 'Good category')
+        new_categ = Category.objects.get(id=categ_id)
+        self.assertEqual(new_categ.name, 'Good category')
         self.assertEqual(response.status_code, 200)
         self.assertRedirects(response, reverse('settings'))
 
@@ -126,7 +123,8 @@ class CategoryDeleteViewTest(TestCase):
         Category.objects.create(name='Category 1')
 
     def test_category_delete_url_exists(self):
-        response = self.client.get('/readlater/category/delete/1')
+        categ_id = Category.objects.get(name='Category 1').id
+        response = self.client.get(f'/readlater/category/delete/{categ_id}')
 
         # test that 'Read' is a link to the read page from the unread page
         self.assertContains(response, '<h4>Delete Category</h4>', status_code=200)
@@ -136,7 +134,8 @@ class CategoryDeleteViewTest(TestCase):
         self.assertContains(response, '<h4>Delete Category</h4>', status_code=200)
 
     def test_category_delete_uses_correct_template(self):
-        response = self.client.get('/readlater/category/delete/1')
+        categ_id = Category.objects.get(name='Category 1').id
+        response = self.client.get(f'/readlater/category/delete/{categ_id}')
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'readlater/category_delete_form.html')
 
@@ -149,15 +148,19 @@ class CategoryDeleteViewTest(TestCase):
 
     def test_category_delete_form_valid_post(self):
         """ Test that form properly deletes a record. """
-        self.assertEqual(len(Category.objects.all()), 2)
-        self.send_delete_post(2)
         self.assertEqual(len(Category.objects.all()), 1)
+        categ_id = Category.objects.get(name='Category 1').id
+        self.send_delete_post(categ_id)
+        self.assertEqual(len(Category.objects.all()), 0)
 
     def test_category_delete_form_valid_post_protect_pk1(self):
         """ Don't let user delete first record which is Uncategorized. """
-        self.assertEqual(len(Category.objects.all()), 2)
+        # make sure uncategorized category exists
+        uncat = Category.get_uncategorized()
+
+        nobjects = len(Category.objects.all())
 
         # expect a 403 status code when trying to delete record 1 "Uncategorized"
-        self.send_delete_post(1, 403)
+        self.send_delete_post(uncat.id, 403)
 
-        self.assertEqual(len(Category.objects.all()), 2)
+        self.assertEqual(len(Category.objects.all()), nobjects)

@@ -1,4 +1,5 @@
 import os
+import re
 import time
 import datetime
 from urllib.parse import urljoin
@@ -77,20 +78,58 @@ class ArticleListTestCase(FunctionalTestBase, StaticLiveServerTestCase):
     #      given a pk and also find the pk given a record.  Currently everything is hard
     #      coded or duplicated so maintenance would be more difficult than it should be.
 
-    def _create_article_list(self):
-        for categ_id in range(self.NUM_CATEGORIES):
-            Category.objects.create(name=f'Category {categ_id}')
+    MAX_NAME_LEN = 100
+    MAX_NOTES_LEN = 100
+    MAX_URL_LEN = 400
 
-        # skip over the uncategorized category record created in migration
-        categ_id = 2
+    # causes database to be restored to post-migrate state for
+    # each test instead of being flushed
+    #serialized_rollback = True
+
+    @staticmethod
+    def _create_article_name(index):
+        return f'Article {index}'
+
+    @staticmethod
+    def _get_index_from_article_name(name):
+        match = re.match(r'^Article\s(\d*)$', name)
+        return int(match.groups()[0])
+
+    @staticmethod
+    def _create_article_category(index):
+        return f'Category {index % ArticleListTestCase.NUM_CATEGORIES}'
+
+    @staticmethod
+    def _create_article_notes(index):
+        return f'Note {index}'
+
+    @staticmethod
+    def _create_article_priority_level(index):
+        return ArticleListTestCase.PRIORITY_LEVELS[index % len(ArticleListTestCase.PRIORITY_LEVELS)]
+
+    @staticmethod
+    def _create_article_priority_name(index):
+        return ArticleListTestCase.PRIORITIES[index % len(ArticleListTestCase.PRIORITY_LEVELS)]
+
+    @staticmethod
+    def _create_article_progress(index):
+        if index < ArticleListTestCase.NUM_UNREAD_ARTICLES:
+            progress = (index * 100) // ArticleListTestCase.NUM_UNREAD_ARTICLES
+        else:
+            progress = 100
+        return progress
+
+    def _create_article_list(self):
+        # database should be wiped at start of test
+        self.assertEqual(len(Article.objects.all()), 0)
+
         for article_id in range(self.NUM_ARTICLES):
-            art_categ = Category.objects.get(id=categ_id)
-            name = f'Article {article_id}'
-            notes = f'Note {article_id}'
-            priority = self.PRIORITY_LEVELS[article_id % 5]
-            progress = (article_id * 10)
-            if progress > 100:
-                progress = 100
+            name = self._create_article_name(article_id)
+            notes = self._create_article_notes(article_id)
+            categ = self._create_article_category(article_id)
+            priority = self._create_article_priority_level(article_id)
+            progress = self._create_article_progress(article_id)
+            art_categ, _ = Category.objects.get_or_create(name=categ)
             updated = None
             finish = None
             if progress > 0:
@@ -104,10 +143,6 @@ class ArticleListTestCase(FunctionalTestBase, StaticLiveServerTestCase):
                                    progress=progress,
                                    updated_time=updated,
                                    finished_time=finish)
-
-            categ_id += 1
-            if categ_id == (self.NUM_CATEGORIES + 2):
-                categ_id = 2
 
     def _check_article_list_ordering(self, sort_ordering_args, num_rows_expected, state):
         """
@@ -132,23 +167,31 @@ class ArticleListTestCase(FunctionalTestBase, StaticLiveServerTestCase):
         # loop index started at 0
         for i, row in enumerate(rows):
             cols = row.find_elements_by_tag_name('td')
+
+            index = self._get_index_from_article_name(cols[1].text)
+            art_pk = Article.objects.get(name=cols[1].text).id
             isort = sort_ordering_args[i]
             if state == 'unread':
-                progress = (isort * 10)
+                offset = 0
             else:
-                progress = 100
+                offset = self.NUM_UNREAD_ARTICLES
+
+            progress = self._create_article_progress(index+offset)
+            categ = self._create_article_category(index+offset)
+            notes = self._create_article_notes(index)
+            priority = self._create_article_priority_name(index+offset)
 
             self.assertEqual(cols[0].text, 'LINK')
             self.assertEqual(cols[1].text, f'Article {isort}')
-            self.assertEqual(cols[2].text, f'Category {isort % self.NUM_CATEGORIES}')
-            self.assertEqual(cols[3].text, f'Note {isort}')
-            self.assertEqual(cols[4].text, f'{self.PRIORITIES[isort % self.NUM_CATEGORIES]}')
-            self.assertEqual(cols[5].text, f'{progress}') #f'{(isort * 10) % 101}')
+            self.assertEqual(cols[2].text, categ)
+            self.assertEqual(cols[3].text, notes)
+            self.assertEqual(cols[4].text, priority)
+            self.assertEqual(cols[5].text, f'{progress}')
             edit_anchor = cols[9].find_element_by_tag_name('a').get_attribute('href')
-            expected = urljoin(self.live_server_url, f'/readlater/article/edit/{isort+1}?state={state}')
+            expected = urljoin(self.live_server_url, f'/readlater/article/edit/{art_pk}?state={state}')
             self.assertEqual(edit_anchor, expected)
             del_anchor = cols[10].find_element_by_tag_name('a').get_attribute('href')
-            expected = urljoin(self.live_server_url, f'/readlater/article/delete/{isort+1}?state={state}')
+            expected = urljoin(self.live_server_url, f'/readlater/article/delete/{art_pk}?state={state}')
             self.assertEqual(del_anchor, expected)
 
     def test_load_article_empty_list(self):
@@ -220,7 +263,7 @@ class ArticleListTestCase(FunctionalTestBase, StaticLiveServerTestCase):
         self.assertIsNotNone(name_ele)
         self.assertEqual(name_ele.tag_name, 'input')
         self.assertEqual(name_ele.get_attribute('type'), 'text')
-        self.assertEqual(name_ele.get_attribute('maxlength'), '100')
+        self.assertEqual(name_ele.get_attribute('maxlength'), f'{self.MAX_NAME_LEN}')
 
         # parse index in creation list from article name
         # FIXME need more robust way to parse number
@@ -241,7 +284,7 @@ class ArticleListTestCase(FunctionalTestBase, StaticLiveServerTestCase):
         self.assertIsNotNone(url_ele)
         self.assertEqual(url_ele.tag_name, 'input')
         self.assertEqual(url_ele.get_attribute('type'), 'url')
-        self.assertEqual(url_ele.get_attribute('maxlength'), '200')
+        self.assertEqual(url_ele.get_attribute('maxlength'), f'{self.MAX_URL_LEN}')
 
         cat_ele = self.selenium.find_element_by_name('category')
         self.assertIsNotNone(cat_ele)
@@ -252,9 +295,8 @@ class ArticleListTestCase(FunctionalTestBase, StaticLiveServerTestCase):
         self.assertEqual(f'Category {index % self.NUM_CATEGORIES}', option_eles[selected].text)
 
         # test number of categories offered - including the '------'
-        # and 'Uncategories' options in additon to NUM_CATEGORIES
-        # created in _create_article_list()
-        self.assertEqual(len(option_eles), self.NUM_CATEGORIES+2)
+        # option in additon to NUM_CATEGORIES created in _create_article_list()
+        self.assertEqual(len(option_eles), self.NUM_CATEGORIES+1)
 
         pri_ele = self.selenium.find_element_by_name('priority')
         self.assertIsNotNone(pri_ele)
@@ -275,4 +317,4 @@ class ArticleListTestCase(FunctionalTestBase, StaticLiveServerTestCase):
         self.assertIsNotNone(notes_ele)
         self.assertEqual(notes_ele.tag_name, 'input')
         self.assertEqual(notes_ele.get_attribute('type'), 'text')
-        self.assertEqual(notes_ele.get_attribute('maxlength'), '100')
+        self.assertEqual(notes_ele.get_attribute('maxlength'), f'{self.MAX_NOTES_LEN}')
