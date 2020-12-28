@@ -166,7 +166,7 @@ class SettingsTestCase(FunctionalTestBase, StaticLiveServerTestCase):
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
 
         # check page text
-        self.assertIn('Are you sure you want to delete the category Category 0', self.selenium.page_source)
+        self.assertIn(f'Are you sure you want to delete the category {categ.name}', self.selenium.page_source)
 
         # find confirm button
         confirm_ele = None

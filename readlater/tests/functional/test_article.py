@@ -75,31 +75,34 @@ class ArticleListTestCase(FunctionalTestBase, StaticLiveServerTestCase):
             progress = 100
         return progress
 
+    def _create_article_by_index(self, index):
+        name = self._create_article_name(index)
+        notes = self._create_article_notes(index)
+        categ = self._create_article_category(index)
+        priority = self._create_article_priority_level(index)
+        progress = self._create_article_progress(index)
+        art_categ, _ = Category.objects.get_or_create(name=categ)
+        updated = None
+        finish = None
+        if progress > 0:
+            updated = datetime.datetime.now(tz=datetime.timezone.utc)
+            if progress == 100:
+                finish = updated
+        Article.objects.create(name=name,
+                               url=f'http://example.com/article_{index}',
+                               notes=notes,
+                               category=art_categ,
+                               priority=priority,
+                               progress=progress,
+                               updated_time=updated,
+                               finished_time=finish)
+
     def _create_article_list(self):
         # database should be wiped at start of test
         self.assertEqual(len(Article.objects.all()), 0)
 
         for article_id in range(self.NUM_ARTICLES):
-            name = self._create_article_name(article_id)
-            notes = self._create_article_notes(article_id)
-            categ = self._create_article_category(article_id)
-            priority = self._create_article_priority_level(article_id)
-            progress = self._create_article_progress(article_id)
-            art_categ, _ = Category.objects.get_or_create(name=categ)
-            updated = None
-            finish = None
-            if progress > 0:
-                updated = datetime.datetime.now(tz=datetime.timezone.utc)
-                if progress == 100:
-                    finish = updated
-            Article.objects.create(name=name,
-                                   url=f'http://example.com/article_{article_id}',
-                                   notes=notes,
-                                   category=art_categ,
-                                   priority=priority,
-                                   progress=progress,
-                                   updated_time=updated,
-                                   finished_time=finish)
+            self._create_article_by_index(article_id)
 
     def _check_article_list_ordering(self, sort_ordering_args, num_rows_expected, state):
         """
@@ -344,3 +347,42 @@ class ArticleListTestCase(FunctionalTestBase, StaticLiveServerTestCase):
         self.assertEqual(cols[3].text, 'Note 0')
         self.assertEqual(cols[4].text, 'Normal')
         self.assertEqual(cols[5].text, '0')
+
+    def test_load_articles_delete_article(self):
+        # verify no articles exist
+        self.assertEqual(len(Article.objects.all()), 0)
+
+        # create a category and article
+        self._create_article_by_index(0)
+        art = Article.objects.first()
+
+        url = urljoin(self.live_server_url, reverse('article_list'))
+        self.selenium.get(url)
+        self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
+
+        # find delete link
+        self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
+        tbody = self.selenium.find_element_by_tag_name('tbody')
+        rows = tbody.find_elements_by_tag_name('tr')
+        self.assertEqual(len(rows), 1)
+        cols = rows[0].find_elements_by_tag_name('td')
+        self.assertEqual(cols[1].text, art.name)
+        delete_link = cols[10].find_element_by_tag_name('a')
+        delete_link.click()
+        self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
+
+        # check page text
+        self.assertIn(f'Are you sure you want to delete the article {str(art)}', self.selenium.page_source)
+
+        # find confirm button
+        confirm_ele = None
+        for ele in self.selenium.find_elements_by_tag_name('input'):
+            if ele.get_attribute('value') == 'Confirm':
+                confirm_ele = ele
+                break
+        self.assertIsNotNone(confirm_ele)
+        confirm_ele.click()
+
+        # wait for form to redirect and load list of categories and verify first category changed
+        self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
+        self.assertIn('There are no articles', self.selenium.page_source)
