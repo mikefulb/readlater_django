@@ -11,6 +11,8 @@ Settings
 {% block content %}
 {% if category_list %}
 <h4>Categories</h4>
+<a href="{% url 'category_create_form' %}" name="create_category_href_top">Create Category</a>
+<br>
 <table class="table table-striped">
   <thead class="thead-dark">
     <th>Name</th>
@@ -34,6 +36,5 @@ Settings
 {% else %}
 <p>There are no categories.</p>
 {% endif %}
-<br>
-<a href="{% url 'category_create_form' %}">Create Category</a>
+<a href="{% url 'category_create_form' %}" name="create_category_href_bottom">Create Category</a>
 {% endblock %}

@@ -5,7 +5,7 @@ from urllib.parse import urljoin
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.urls import reverse
 
-from .utils import wait, FunctionalTestBase
+from .utils import FunctionalTestBase
 
 from ...models import Article, Category
 
@@ -224,20 +224,10 @@ class ArticleListTestCase(FunctionalTestBase, StaticLiveServerTestCase):
         self.assertEqual(name_ele.get_attribute('maxlength'), f'{self.MAX_NAME_LEN}')
 
         # parse index in creation list from article name
-        # FIXME need more robust way to parse number
         art_name = name_ele.get_attribute('value')
-        self.assertIn('Article', art_name)
-        index = int(art_name[7:])
+        index = self._get_index_from_article_name(art_name)
         self.assertTrue(isinstance(index, int))
 
-        # self.assertEqual(cols[0].text, 'LINK')
-        # self.assertEqual(cols[1].text, f'Article {isort}')
-        # self.assertEqual(cols[2].text, )
-        # self.assertEqual(cols[3].text, f'Note {isort}')
-        # self.assertEqual(cols[4].text, f'{self.PRIORITIES[isort % self.NUM_CATEGORIES]}')
-        # self.assertEqual(cols[5].text, f'{progress}')  # f'{(isort * 10) % 101}')
-        # FIXME Test values for form element values should come from
-        #       a common function instead of these duplicated equations
         url_ele = self.selenium.find_element_by_name('url')
         self.assertIsNotNone(url_ele)
         self.assertEqual(url_ele.tag_name, 'input')
@@ -248,7 +238,6 @@ class ArticleListTestCase(FunctionalTestBase, StaticLiveServerTestCase):
         self.assertIsNotNone(cat_ele)
         self.assertEqual(cat_ele.tag_name, 'select')
         option_eles = cat_ele.find_elements_by_tag_name('option')
-        #selected = [i for i, x in enumerate(option_eles) if x.get_attribute('selected') is not None]
         selected = next(filter(None, (i for i, x in enumerate(option_eles) if x.get_attribute('selected') is not None)))
         self.assertEqual(f'Category {index % self.NUM_CATEGORIES}', option_eles[selected].text)
 
@@ -288,3 +277,70 @@ class ArticleListTestCase(FunctionalTestBase, StaticLiveServerTestCase):
         rows = tbody.find_elements_by_tag_name('tr')
         cols = rows[0].find_elements_by_tag_name('td')
         self.assertEqual(cols[1].text, 'Astronomy')
+
+    def test_load_article_create_article(self):
+        # verify no article exist
+        self.assertEqual(len(Article.objects.all()), 0)
+
+        # create a category
+        categ = Category.objects.create(name='Category 0')
+
+        # load page
+        url = urljoin(self.live_server_url, reverse('article_list'))
+        self.selenium.get(url)
+        self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
+
+        # find add article link
+        create_link = self.selenium.find_element_by_name('create_article_href_bottom')
+        create_link.click()
+        self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
+
+        # enter values
+        name_ele = self.selenium.find_element_by_name('name')
+        self.assertIsNotNone(name_ele)
+        name_ele.send_keys('Article 0')
+
+        url_ele = self.selenium.find_element_by_name('url')
+        self.assertIsNotNone(url_ele)
+        url_ele.send_keys('http://example.com/article_0')
+
+        cat_ele = self.selenium.find_element_by_name('category')
+        self.assertIsNotNone(cat_ele)
+        self.assertEqual(cat_ele.tag_name, 'select')
+        set_option = False
+        for option in cat_ele.find_elements_by_tag_name('option'):
+            if option.text == categ.name:
+                option.click()
+                set_option = True
+                break
+        self.assertTrue(set_option)
+
+        pri_ele = self.selenium.find_element_by_name('priority')
+        self.assertIsNotNone(pri_ele)
+        self.assertEqual(pri_ele.tag_name, 'select')
+        set_option = False
+        for option in pri_ele.find_elements_by_tag_name('option'):
+            if option.text == 'Normal':
+                option.click()
+                set_option = True
+                break
+        self.assertTrue(set_option)
+
+        notes_ele = self.selenium.find_element_by_name('notes')
+        self.assertIsNotNone(notes_ele)
+        notes_ele.send_keys('Note 0')
+
+        # enter category and submit
+        name_ele.submit()
+
+        # wait for form to redirect and load list of categories and verify first category changed
+        self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
+        tbody = self.selenium.find_element_by_tag_name('tbody')
+        rows = tbody.find_elements_by_tag_name('tr')
+        cols = rows[0].find_elements_by_tag_name('td')
+        self.assertEqual(cols[0].text, 'LINK')
+        self.assertEqual(cols[1].text, 'Article 0')
+        self.assertEqual(cols[2].text, 'Category 0')
+        self.assertEqual(cols[3].text, 'Note 0')
+        self.assertEqual(cols[4].text, 'Normal')
+        self.assertEqual(cols[5].text, '0')

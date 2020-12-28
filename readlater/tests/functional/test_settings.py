@@ -1,5 +1,4 @@
 import re
-import datetime
 from urllib.parse import urljoin
 
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
@@ -7,7 +6,7 @@ from django.urls import reverse
 
 
 from .utils import FunctionalTestBase
-from ...models import Article, Category
+from ...models import Category
 
 
 class SettingsTestCase(FunctionalTestBase, StaticLiveServerTestCase):
@@ -42,8 +41,6 @@ class SettingsTestCase(FunctionalTestBase, StaticLiveServerTestCase):
         :type sort_ordering_args: list
         :param num_rows_expected: Number of rows expected in article list.
         :type num_rows_expected: int
-        :param state: Type of article list - 'unread' or 'read'.
-        :type state: str
         """
         tbody = self.selenium.find_element_by_tag_name('tbody')
         rows = tbody.find_elements_by_tag_name('tr')
@@ -55,7 +52,6 @@ class SettingsTestCase(FunctionalTestBase, StaticLiveServerTestCase):
         # loop index started at 0
         for i, row in enumerate(rows):
             cols = row.find_elements_by_tag_name('td')
-            index = self._get_index_from_category_name(cols[0].text)
             categ_pk = Category.objects.get(name=cols[0].text).id
             isort = sort_ordering_args[i]
             self.assertEqual(cols[0].text, self._create_category_name(isort))
@@ -79,7 +75,7 @@ class SettingsTestCase(FunctionalTestBase, StaticLiveServerTestCase):
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
         self._check_category_list_ordering(range(0, self.NUM_CATEGORIES), self.NUM_CATEGORIES)
 
-    def test_load_settings_edit_article(self):
+    def test_load_settings_edit_category(self):
         self._create_category_list()
         url = urljoin(self.live_server_url, reverse('settings'))
         self.selenium.get(url)
@@ -107,6 +103,36 @@ class SettingsTestCase(FunctionalTestBase, StaticLiveServerTestCase):
 
         # change category name and then verify it changed
         name_ele.clear()
+        name_ele.send_keys('Astronomy')
+        name_ele.submit()
+
+        # wait for form to redirect and load list of categories and verify first category changed
+        self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
+        tbody = self.selenium.find_element_by_tag_name('tbody')
+        rows = tbody.find_elements_by_tag_name('tr')
+        cols = rows[0].find_elements_by_tag_name('td')
+        self.assertEqual(cols[0].text, 'Astronomy')
+
+    def test_load_settings_create_category(self):
+        # verify no categories exist
+        self.assertEqual(len(Category.objects.all()), 0)
+        url = urljoin(self.live_server_url, reverse('settings'))
+        self.selenium.get(url)
+        self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
+
+        # find add category link
+        create_link = self.selenium.find_element_by_name('create_category_href_bottom')
+        create_link.click()
+        self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
+
+        # check fields
+        name_ele = self.selenium.find_element_by_name('name')
+        self.assertIsNotNone(name_ele)
+        self.assertEqual(name_ele.tag_name, 'input')
+        self.assertEqual(name_ele.get_attribute('type'), 'text')
+        self.assertEqual(name_ele.get_attribute('maxlength'), f'{self.MAX_NAME_LEN}')
+
+        # enter category and submit
         name_ele.send_keys('Astronomy')
         name_ele.submit()
 
