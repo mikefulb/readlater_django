@@ -5,7 +5,6 @@ from urllib.parse import urljoin
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.urls import reverse
 
-
 from .utils import wait, FunctionalTestBase
 
 from ...models import Article, Category
@@ -94,6 +93,7 @@ class ArticleListTestCase(FunctionalTestBase, StaticLiveServerTestCase):
                 if progress == 100:
                     finish = updated
             Article.objects.create(name=name,
+                                   url=f'http://example.com/article_{article_id}',
                                    notes=notes,
                                    category=art_categ,
                                    priority=priority,
@@ -133,13 +133,14 @@ class ArticleListTestCase(FunctionalTestBase, StaticLiveServerTestCase):
             else:
                 offset = self.NUM_UNREAD_ARTICLES
 
+            name = self._create_article_name(isort)
             progress = self._create_article_progress(index+offset)
             categ = self._create_article_category(index+offset)
             notes = self._create_article_notes(index)
             priority = self._create_article_priority_name(index+offset)
 
             self.assertEqual(cols[0].text, 'LINK')
-            self.assertEqual(cols[1].text, f'Article {isort}')
+            self.assertEqual(cols[1].text, name)
             self.assertEqual(cols[2].text, categ)
             self.assertEqual(cols[3].text, notes)
             self.assertEqual(cols[4].text, priority)
@@ -275,3 +276,15 @@ class ArticleListTestCase(FunctionalTestBase, StaticLiveServerTestCase):
         self.assertEqual(notes_ele.tag_name, 'input')
         self.assertEqual(notes_ele.get_attribute('type'), 'text')
         self.assertEqual(notes_ele.get_attribute('maxlength'), f'{self.MAX_NOTES_LEN}')
+
+        # change article name and then verify it changed
+        name_ele.clear()
+        name_ele.send_keys('Astronomy')
+        name_ele.submit()
+
+        # wait for redirect from form to load list of article and verify first category changed
+        self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
+        tbody = self.selenium.find_element_by_tag_name('tbody')
+        rows = tbody.find_elements_by_tag_name('tr')
+        cols = rows[0].find_elements_by_tag_name('td')
+        self.assertEqual(cols[1].text, 'Astronomy')
