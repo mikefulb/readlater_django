@@ -142,3 +142,41 @@ class SettingsTestCase(FunctionalTestBase, StaticLiveServerTestCase):
         rows = tbody.find_elements_by_tag_name('tr')
         cols = rows[0].find_elements_by_tag_name('td')
         self.assertEqual(cols[0].text, 'Astronomy')
+
+    def test_load_settings_delete_category(self):
+        # verify no categories exist
+        self.assertEqual(len(Category.objects.all()), 0)
+
+        # create a category
+        categ = Category.objects.create(name='Category 0')
+
+        url = urljoin(self.live_server_url, reverse('settings'))
+        self.selenium.get(url)
+        self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
+
+        # find delete link
+        self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
+        tbody = self.selenium.find_element_by_tag_name('tbody')
+        rows = tbody.find_elements_by_tag_name('tr')
+        self.assertEqual(len(rows), 1)
+        cols = rows[0].find_elements_by_tag_name('td')
+        self.assertEqual(cols[0].text, categ.name)
+        delete_link = cols[2].find_element_by_tag_name('a')
+        delete_link.click()
+        self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
+
+        # check page text
+        self.assertIn('Are you sure you want to delete the category Category 0', self.selenium.page_source)
+
+        # find confirm button
+        confirm_ele = None
+        for ele in self.selenium.find_elements_by_tag_name('input'):
+            if ele.get_attribute('value') == 'Confirm':
+                confirm_ele = ele
+                break
+        self.assertIsNotNone(confirm_ele)
+        confirm_ele.click()
+
+        # wait for form to redirect and load list of categories and verify first category changed
+        self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
+        self.assertIn('There are no categories', self.selenium.page_source)
