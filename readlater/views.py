@@ -1,5 +1,6 @@
 import datetime
 
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404, HttpResponseForbidden
 from django.views import generic
 from django.urls import reverse_lazy, reverse
@@ -10,7 +11,7 @@ from .forms import ArticleCreateForm, ArticleEditForm
 from .forms import CategoryCreateForm, CategoryEditForm
 
 
-class ArticleList(generic.ListView):
+class ArticleList(LoginRequiredMixin, generic.ListView):
     """ Show unfinished articles """
     model = Article
     context_object_name = 'article_list'
@@ -87,13 +88,13 @@ class ArticleList(generic.ListView):
         return context
 
 
-class ArticleCreateView(generic.CreateView):
+class ArticleCreateView(LoginRequiredMixin, generic.CreateView):
     model = Article
     form_class = ArticleCreateForm
     template_name_suffix = '_create_form'
 
 
-class ArticleEditView(generic.UpdateView):
+class ArticleEditView(LoginRequiredMixin, generic.UpdateView):
     model = Article
     form_class = ArticleEditForm
     template_name_suffix = '_edit_form'
@@ -115,7 +116,7 @@ class ArticleEditView(generic.UpdateView):
         return reverse('article_list_with_state', kwargs={'state': state})
 
 
-class ArticleDeleteView(generic.DeleteView):
+class ArticleDeleteView(LoginRequiredMixin, generic.DeleteView):
     model = Article
     success_url = reverse_lazy('article_list')
     template_name_suffix = '_delete_form'
@@ -126,7 +127,7 @@ class ArticleDeleteView(generic.DeleteView):
         return reverse('article_list_with_state', kwargs={'state': state})
 
 
-class SettingsView(generic.base.TemplateView):
+class SettingsView(LoginRequiredMixin, generic.base.TemplateView):
     template_name = 'readlater/settings_base.html'
 
     def get_context_data(self, *, object_list=None, **kwargs):
@@ -139,21 +140,21 @@ class SettingsView(generic.base.TemplateView):
         return context
 
 
-class CategoryCreateView(generic.CreateView):
+class CategoryCreateView(LoginRequiredMixin, generic.CreateView):
     model = Category
     form_class = CategoryCreateForm
     success_url = reverse_lazy('settings')
     template_name_suffix = '_create_form'
 
 
-class CategoryEditView(generic.UpdateView):
+class CategoryEditView(LoginRequiredMixin, generic.UpdateView):
     model = Category
     form_class = CategoryEditForm
     success_url = reverse_lazy('settings')
     template_name_suffix = '_edit_form'
 
 
-class CategoryDeleteView(generic.DeleteView):
+class CategoryDeleteView(LoginRequiredMixin, generic.DeleteView):
     model = Category
     success_url = reverse_lazy('settings')
     error_url = reverse_lazy('category_delete_failed.html')

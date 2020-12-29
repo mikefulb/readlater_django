@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from django.views.generic.base import RedirectView
 from . import views
 
@@ -31,5 +31,6 @@ urlpatterns = [
     path('article/create/new', views.ArticleCreateView.as_view(), name='article_create_form'),
     path('article/edit/<int:pk>', views.ArticleEditView.as_view(), name='article_edit_form'),
     path('article/delete/<int:pk>', views.ArticleDeleteView.as_view(), name='article_delete_form'),
+    path('accounts/', include('django.contrib.auth.urls')),
 
 ]

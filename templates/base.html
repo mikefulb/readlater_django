@@ -10,12 +10,17 @@
 
 <html>
     <body>
-
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
           <div class="container">
             <a class="navbar-brand" href="{% url 'home' %}">ReadLater</a>
-            <a class="navbar-brand" href="{% url 'article_list' %}">Article List</a>
-            <a class="navbar-brand" href="{% url 'settings' %}">Settings</a>
+            {% if user.is_authenticated %}
+              <span class="navbar-brand">Welcome {{ user.username }}!</span>
+              <a class="navbar-brand" href="{% url 'article_list' %}">Article List</a>
+              <a class="navbar-brand" href="{% url 'settings' %}">Settings</a>
+              <a class="navbar-brand" href="{% url 'logout' %}">Logout</a>
+            {% else %}
+              <a class="navbar-brand" href="{% url 'login' %}">Login</a>
+            {% endif %}
           </div>
         </nav>
 

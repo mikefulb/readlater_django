@@ -1,5 +1,7 @@
 import logging
 
+from .utils import TestUserMixin
+
 logger = logging.getLogger(__name__)
 logging.disable(logging.NOTSET)
 logger.setLevel(logging.DEBUG)
@@ -12,7 +14,7 @@ from ...models import Article, Category
 from ...forms import ArticleCreateForm, ArticleEditForm
 
 
-class ArticleListViewTest(TestCase):
+class ArticleListViewTest(TestUserMixin, TestCase):
     NUM_ARTICLES = 10
     NUM_CATEGORIES = 5
 
@@ -36,7 +38,7 @@ class ArticleListViewTest(TestCase):
         #
         # NOTE Should leverage tests from test_view_unread_url_exists()
         #      as it is the same case
-
+        self._login()
         response = self.client.get('/readlater/articles/')
 
         # test that 'Read' is a link to the read page from the unread page
@@ -49,6 +51,7 @@ class ArticleListViewTest(TestCase):
     def test_view_unread_url_exists(self):
         # FIXME need to add some finished articles and verify only those
         #       are visible
+        self._login()
         response = self.client.get('/readlater/articles/unread')
 
         # test that 'Read' is a link to the read page from the unread page
@@ -61,6 +64,7 @@ class ArticleListViewTest(TestCase):
     def test_view_read_url_exists(self):
         # FIXME need to add some finished articles and verify only those
         #       are visible
+        self._login()
 
         response = self.client.get('/readlater/articles/read')
 
@@ -72,17 +76,19 @@ class ArticleListViewTest(TestCase):
         self.assertContains(response, '<a href="unread">Unread</a>', status_code=200)
 
     def test_view_uses_correct_template(self):
+        self._login()
         response = self.client.get('/readlater/articles/')
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'readlater/article_list.html')
 
     def test_view_lists_all_articles(self):
+        self._login()
         response = self.client.get('/readlater/articles/')
         self.assertEqual(response.status_code, 200)
         self.assertTrue(len(response.context['article_list']) == ArticleListViewTest.NUM_ARTICLES)
 
 
-class ArticleCreateNewViewTest(TestCase):
+class ArticleCreateNewViewTest(TestUserMixin, TestCase):
 
     MAX_NAME_LEN = 100
     MAX_NOTES_LEN = 100
@@ -93,6 +99,7 @@ class ArticleCreateNewViewTest(TestCase):
         Category.objects.create(name='Category')
 
     def test_article_create_url_exists(self):
+        self._login()
         response = self.client.get('/readlater/article/create/new')
 
         # test that 'Read' is a link to the read page from the unread page
@@ -103,6 +110,7 @@ class ArticleCreateNewViewTest(TestCase):
         self.assertContains(response, '<h4>Create Article</h4>', status_code=200)
 
     def test_article_create_uses_correct_template(self):
+        self._login()
         response = self.client.get('/readlater/article/create/new')
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'readlater/article_create_form.html')
@@ -159,6 +167,7 @@ class ArticleCreateNewViewTest(TestCase):
         self.assertFalse(form.is_valid())
 
     def test_article_create_form_valid_post(self):
+        self._login()
         self.assertEqual(len(Article.objects.all()), 0)
         response = self.client.post(reverse('article_create_form'),
                                     data={'name': 'Article',
@@ -172,10 +181,10 @@ class ArticleCreateNewViewTest(TestCase):
         self.assertEqual(len(Article.objects.all()), 1)
 
 
-class ArticleEditViewTest(TestCase):
+class ArticleEditViewTest(TestUserMixin, TestCase):
 
-    @classmethod
-    def setUp(cls):
+    def setUp(self):
+        super().setUp()
         Category.objects.create(name='Category 1')
         Category.objects.create(name='Category 2')
 
@@ -187,6 +196,7 @@ class ArticleEditViewTest(TestCase):
                                progress=10)
 
     def test_article_edit_url_exists(self):
+        self._login()
         response = self.client.get('/readlater/article/edit/1')
 
         # test that 'Read' is a link to the read page from the unread page
@@ -197,6 +207,7 @@ class ArticleEditViewTest(TestCase):
         self.assertContains(response, '<h4>Edit Article</h4>', status_code=200)
 
     def test_article_edit_uses_correct_template(self):
+        self._login()
         response = self.client.get('/readlater/article/edit/1')
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'readlater/article_edit_form.html')
@@ -275,6 +286,7 @@ class ArticleEditViewTest(TestCase):
         self.assertFalse(form.is_valid())
 
     def test_article_edit_form_valid_post(self):
+        self._login()
         for state in ['unread', 'read']:
             url = reverse('article_edit_form', args=(1,))
             response = self.client.post(url + '?' + urlencode({'state': state}),
@@ -292,10 +304,10 @@ class ArticleEditViewTest(TestCase):
             self.assertEqual(art.progress, 50)
 
 
-class ArticleDeleteViewTest(TestCase):
+class ArticleDeleteViewTest(TestUserMixin, TestCase):
 
-    @classmethod
-    def setUp(cls):
+    def setUp(self):
+        super().setUp()
         Category.objects.create(name='Category 1')
 
         # skip over the uncategorized category record created in migration
@@ -305,7 +317,11 @@ class ArticleDeleteViewTest(TestCase):
                                priority=200,
                                progress=10)
 
+    def tearDown(self):
+        self.user.delete()
+
     def test_article_delete_url_exists(self):
+        self._login()
         response = self.client.get('/readlater/article/delete/1')
 
         # test that 'Read' is a link to the read page from the unread page
@@ -316,6 +332,7 @@ class ArticleDeleteViewTest(TestCase):
         self.assertContains(response, '<h4>Delete Article</h4>', status_code=200)
 
     def test_article_delete_uses_correct_template(self):
+        self._login()
         response = self.client.get('/readlater/article/delete/1')
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'readlater/article_delete_form.html')
@@ -330,7 +347,9 @@ class ArticleDeleteViewTest(TestCase):
         self.assertEqual(len(Article.objects.all()), 0)
 
     def test_article_delete_form_state_unread_valid_post(self):
+        self._login()
         self.send_delete_post('unread')
 
     def test_article_delete_form_state_read_valid_post(self):
+        self._login()
         self.send_delete_post('read')

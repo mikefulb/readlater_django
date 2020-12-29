@@ -1,4 +1,7 @@
 import logging
+
+from .utils import TestUserMixin
+
 logger = logging.getLogger(__name__)
 logging.disable(logging.NOTSET)
 logger.setLevel(logging.DEBUG)
@@ -12,7 +15,7 @@ from ...forms import CategoryCreateForm, CategoryEditForm
 MAX_CATEG_LEN = 100
 
 
-class SettingsViewTest(TestCase):
+class SettingsViewTest(TestUserMixin, TestCase):
     NUM_CATEGORIES = 5
 
     @classmethod
@@ -21,6 +24,7 @@ class SettingsViewTest(TestCase):
             Category.objects.create(name=f'Category {categ_id}')
 
     def test_settings_url_exists(self):
+        self._login()
         response = self.client.get('/readlater/settings/')
 
         # test that 'Read' is a link to the read page from the unread page
@@ -31,11 +35,13 @@ class SettingsViewTest(TestCase):
         self.assertContains(response, '<h4>Settings</h4>', status_code=200)
 
     def test_settings_uses_correct_template(self):
+        self._login()
         response = self.client.get('/readlater/settings/')
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'readlater/settings_base.html')
 
     def test_settings_lists_all_categories(self):
+        self._login()
         response = self.client.get('/readlater/settings/')
         self.assertEqual(response.status_code, 200)
 
@@ -44,9 +50,10 @@ class SettingsViewTest(TestCase):
         self.assertTrue(len(response.context['category_list']) == SettingsViewTest.NUM_CATEGORIES)
 
 
-class CategoryCreateNewViewTest(TestCase):
+class CategoryCreateNewViewTest(TestUserMixin, TestCase):
 
     def test_category_create_url_exists(self):
+        self._login()
         response = self.client.get('/readlater/category/create/new')
 
         self.assertContains(response, '<h4>Create Category</h4>', status_code=200)
@@ -56,6 +63,7 @@ class CategoryCreateNewViewTest(TestCase):
         self.assertContains(response, '<h4>Create Category</h4>', status_code=200)
 
     def test_category_create_uses_correct_template(self):
+        self._login()
         response = self.client.get('/readlater/category/create/new')
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'readlater/category_create_form.html')
@@ -69,6 +77,7 @@ class CategoryCreateNewViewTest(TestCase):
         self.assertFalse(form.is_valid())
 
     def test_category_create_form_valid_post(self):
+        self._login()
         self.assertEqual(len(Category.objects.all()), 0)
         response = self.client.post(reverse('category_create_form'),
                                     data={'name': 'Good category'}, follow=True)
@@ -77,13 +86,14 @@ class CategoryCreateNewViewTest(TestCase):
         self.assertEqual(len(Category.objects.all()), 1)
 
 
-class CategoryEditViewTest(TestCase):
+class CategoryEditViewTest(TestUserMixin, TestCase):
 
-    @classmethod
-    def setUp(cls):
+    def setUp(self):
+        super().setUp()
         Category.objects.create(name='Category 1')
 
     def test_category_edit_url_exists(self):
+        self._login()
         categ_id = Category.objects.get(name='Category 1').id
         response = self.client.get(f'/readlater/category/edit/{categ_id}')
         self.assertContains(response, '<h4>Edit Category</h4>', status_code=200)
@@ -93,6 +103,7 @@ class CategoryEditViewTest(TestCase):
         self.assertContains(response, '<h4>Edit Category</h4>', status_code=200)
 
     def test_category_edit_uses_correct_template(self):
+        self._login()
         categ_id = Category.objects.get(name='Category 1').id
         response = self.client.get(f'/readlater/category/edit/{categ_id}')
         self.assertEqual(response.status_code, 200)
@@ -107,6 +118,7 @@ class CategoryEditViewTest(TestCase):
         self.assertFalse(form.is_valid())
 
     def test_category_edit_form_valid_post(self):
+        self._login()
         categ_id = Category.objects.get(name='Category 1').id
         response = self.client.post(reverse('category_edit_form', kwargs={'pk': categ_id}),
                                     data={'name': 'Good category'}, follow=True)
@@ -116,13 +128,14 @@ class CategoryEditViewTest(TestCase):
         self.assertRedirects(response, reverse('settings'))
 
 
-class CategoryDeleteViewTest(TestCase):
+class CategoryDeleteViewTest(TestUserMixin, TestCase):
 
-    @classmethod
-    def setUp(cls):
+    def setUp(self):
+        super().setUp()
         Category.objects.create(name='Category 1')
 
     def test_category_delete_url_exists(self):
+        self._login()
         categ_id = Category.objects.get(name='Category 1').id
         response = self.client.get(f'/readlater/category/delete/{categ_id}')
 
@@ -134,12 +147,14 @@ class CategoryDeleteViewTest(TestCase):
         self.assertContains(response, '<h4>Delete Category</h4>', status_code=200)
 
     def test_category_delete_uses_correct_template(self):
+        self._login()
         categ_id = Category.objects.get(name='Category 1').id
         response = self.client.get(f'/readlater/category/delete/{categ_id}')
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'readlater/category_delete_form.html')
 
     def send_delete_post(self, pk, status_code=200):
+        self._login()
         url = reverse('category_delete_form', args=(pk,))
         response = self.client.post(url, follow=True)
         self.assertEqual(response.status_code, status_code)
@@ -156,6 +171,7 @@ class CategoryDeleteViewTest(TestCase):
     def test_category_delete_form_valid_post_protect_pk1(self):
         """ Don't let user delete first record which is Uncategorized. """
         # make sure uncategorized category exists
+        self._login()
         uncat = Category.get_uncategorized()
 
         nobjects = len(Category.objects.all())
