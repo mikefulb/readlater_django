@@ -8,7 +8,7 @@ class TestUserMixin:
     TEST_PASSWORD = 'testuserpassword'
 
     def setUp(self):
-        self.user = User.objects.create_user('TestUser', 'testuser@example.com', 'testuserpassword')
+        self.user = User.objects.create_user(self.TEST_USERNAME, self.TEST_EMAIL, self.TEST_PASSWORD)
 
     def tearDown(self):
         self.user.delete()

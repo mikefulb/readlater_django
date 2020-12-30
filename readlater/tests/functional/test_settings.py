@@ -1,15 +1,16 @@
 import re
+import time
 from urllib.parse import urljoin
 
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.urls import reverse
 
 
-from .utils import FunctionalTestBase
+from .utils import FunctionalTestBase, FunctionalTestLoginMixin
 from ...models import Category
 
 
-class SettingsTestCase(FunctionalTestBase, StaticLiveServerTestCase):
+class SettingsTestCase(FunctionalTestLoginMixin, FunctionalTestBase, StaticLiveServerTestCase):
 
     NUM_CATEGORIES = 10
     MAX_NAME_LEN = 100
@@ -63,6 +64,9 @@ class SettingsTestCase(FunctionalTestBase, StaticLiveServerTestCase):
             self.assertEqual(del_anchor, expected)
 
     def test_load_settings_empty_list(self):
+        self._login(urljoin(self.live_server_url, reverse('login')))
+        # seems to help to have a delay between login and next page access
+        time.sleep(1)
         url = urljoin(self.live_server_url, reverse('settings'))
         self.selenium.get(url)
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
@@ -70,6 +74,9 @@ class SettingsTestCase(FunctionalTestBase, StaticLiveServerTestCase):
 
     def test_load_settings_populated_lists(self):
         self._create_category_list()
+        self._login(urljoin(self.live_server_url, reverse('login')))
+        # seems to help to have a delay between login and next page access
+        time.sleep(1)
         url = urljoin(self.live_server_url, reverse('settings'))
         self.selenium.get(url)
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
@@ -77,6 +84,9 @@ class SettingsTestCase(FunctionalTestBase, StaticLiveServerTestCase):
 
     def test_load_settings_edit_category(self):
         self._create_category_list()
+        self._login(urljoin(self.live_server_url, reverse('login')))
+        # seems to help to have a delay between login and next page access
+        time.sleep(1)
         url = urljoin(self.live_server_url, reverse('settings'))
         self.selenium.get(url)
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
@@ -114,6 +124,9 @@ class SettingsTestCase(FunctionalTestBase, StaticLiveServerTestCase):
         self.assertEqual(cols[0].text, 'Astronomy')
 
     def test_load_settings_create_category(self):
+        self._login(urljoin(self.live_server_url, reverse('login')))
+        # seems to help to have a delay between login and next page access
+        time.sleep(1)
         # verify no categories exist
         self.assertEqual(len(Category.objects.all()), 0)
         url = urljoin(self.live_server_url, reverse('settings'))
@@ -149,7 +162,9 @@ class SettingsTestCase(FunctionalTestBase, StaticLiveServerTestCase):
 
         # create a category
         categ = Category.objects.create(name='Category 0')
-
+        self._login(urljoin(self.live_server_url, reverse('login')))
+        # seems to help to have a delay between login and next page access
+        time.sleep(1)
         url = urljoin(self.live_server_url, reverse('settings'))
         self.selenium.get(url)
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
