@@ -1,6 +1,10 @@
 from django.contrib.auth.models import User
 
 
+def get_login_redirect_url(url):
+    return f'/readlater/accounts/login/?next={url}'
+
+
 class TestUserMixin:
 
     TEST_USERNAME = 'TestUser'
@@ -8,7 +12,8 @@ class TestUserMixin:
     TEST_PASSWORD = 'testuserpassword'
 
     def setUp(self):
-        self.user = User.objects.create_user(self.TEST_USERNAME, self.TEST_EMAIL, self.TEST_PASSWORD)
+        self.user = User.objects.create_user(self.TEST_USERNAME, self.TEST_EMAIL,
+                                             self.TEST_PASSWORD)
 
     def tearDown(self):
         self.user.delete()

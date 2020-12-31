@@ -26,7 +26,8 @@ class ArticleListViewTest(TestUserMixin, TestCase):
         # skip over the uncategorized category record created in migration
         categ_id = 0
         for article_id in range(ArticleListViewTest.NUM_ARTICLES):
-            art_categ = Category.objects.get(name=f'Category {categ_id % ArticleListViewTest.NUM_CATEGORIES}')
+            art_categ = Category.objects.get(name='Category ' \
+                                  f'{categ_id % ArticleListViewTest.NUM_CATEGORIES}')
             Article.objects.create(name=f'Article {article_id}',
                                    category=art_categ,
                                    priority=article_id * 100,
@@ -58,7 +59,8 @@ class ArticleListViewTest(TestUserMixin, TestCase):
         self.assertContains(response, '<a href="read">Read</a>', status_code=200)
 
         # also test using name
-        response = self.client.get(reverse('article_list_with_state', args=['unread']))
+        response = self.client.get(
+            reverse('article_list_with_state', args=['unread']))
         self.assertContains(response, '<a href="read">Read</a>', status_code=200)
 
     def test_view_read_url_exists(self):
@@ -85,11 +87,11 @@ class ArticleListViewTest(TestUserMixin, TestCase):
         self._login()
         response = self.client.get('/readlater/articles/')
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(len(response.context['article_list']) == ArticleListViewTest.NUM_ARTICLES)
+        self.assertTrue(len(
+            response.context['article_list']) == ArticleListViewTest.NUM_ARTICLES)
 
 
 class ArticleCreateNewViewTest(TestUserMixin, TestCase):
-
     MAX_NAME_LEN = 100
     MAX_NOTES_LEN = 100
     MAX_URL_LEN = 400
@@ -126,7 +128,7 @@ class ArticleCreateNewViewTest(TestUserMixin, TestCase):
 
     def test_article_create_form_invalid_name_data(self):
         categ = Category.objects.get(name='Category')
-        form = ArticleCreateForm(dict(name='A' * (self.MAX_NAME_LEN+1),
+        form = ArticleCreateForm(dict(name='A' * (self.MAX_NAME_LEN + 1),
                                       notes='Note',
                                       url='http://this.is.url.org',
                                       category=categ,
@@ -136,7 +138,7 @@ class ArticleCreateNewViewTest(TestUserMixin, TestCase):
     def test_article_create_form_invalid_notes_data(self):
         categ = Category.objects.get(name='Category')
         form = ArticleCreateForm(dict(name='A' * self.MAX_NAME_LEN,
-                                      notes='N' * (self.MAX_NOTES_LEN+1),
+                                      notes='N' * (self.MAX_NOTES_LEN + 1),
                                       url='http://this.is.url.org',
                                       category=categ,
                                       priority=0))
@@ -152,7 +154,8 @@ class ArticleCreateNewViewTest(TestUserMixin, TestCase):
         self.assertFalse(form.is_valid())
         form = ArticleCreateForm(dict(name='A' * self.MAX_NAME_LEN,
                                       notes='N' * self.MAX_NOTES_LEN,
-                                      url='http://this.is.url.org/' + 'A' * (self.MAX_URL_LEN+1),
+                                      url='http://this.is.url.org/' + 'A' * (
+                                                  self.MAX_URL_LEN + 1),
                                       category=categ,
                                       priority=0))
         self.assertFalse(form.is_valid())
@@ -298,7 +301,8 @@ class ArticleEditViewTest(TestUserMixin, TestCase):
                                               'progress': 50
                                               }, follow=True)
             self.assertEqual(response.status_code, 200)
-            self.assertRedirects(response, reverse('article_list_with_state', args=(state,)))
+            self.assertRedirects(response,
+                                 reverse('article_list_with_state', args=(state,)))
 
             art = Article.objects.get(name='Article')
             self.assertEqual(art.progress, 50)
@@ -343,7 +347,8 @@ class ArticleDeleteViewTest(TestUserMixin, TestCase):
         response = self.client.post(url + '?' + urlencode({'state': state}),
                                     data={'state': state}, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertRedirects(response, reverse('article_list_with_state', args=(state,)))
+        self.assertRedirects(response,
+                             reverse('article_list_with_state', args=(state,)))
         self.assertEqual(len(Article.objects.all()), 0)
 
     def test_article_delete_form_state_unread_valid_post(self):

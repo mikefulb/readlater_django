@@ -137,7 +137,10 @@ class ArticleModelTest(TestCase):
         self.assertEqual(art.get_absolute_url(), reverse('article_list'))
 
     def test_article_set_uncateg_on_cat_delete(self):
-        """ Test that article category is set to 'Uncategorized' if its category is deleted. """
+        """
+        Test that article category is set to 'Uncategorized' if its category
+        is deleted.
+        """
         categ = Category.objects.get_or_create(name='Category 2')[0]
         Article.objects.create(name='Random Article',
                                notes=ArticleModelTest.TEST_ARTICLE_NOTE,
