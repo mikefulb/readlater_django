@@ -1,8 +1,6 @@
-import datetime
-from functools import partial
-
 from django.db import models
 from django.urls import reverse
+from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 
@@ -59,8 +57,7 @@ class Article(models.Model):
                                    validators=[MinValueValidator(0),
                                                MaxValueValidator(100)],
                                    help_text='Percentage progress reading article.')
-    datetime_now_utc = partial(datetime.datetime.now, tz=datetime.timezone.utc)
-    added_time = models.DateTimeField(default=datetime_now_utc,
+    added_time = models.DateTimeField(default=timezone.now,
                                       help_text='Timestamp for when article was added.')
     finished_time = models.DateTimeField(null=True, blank=True, editable=False,
                                          help_text='Timestamp for when article was finished.')
