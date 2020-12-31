@@ -10,6 +10,9 @@ from .utils import FunctionalTestBaseMixin, FunctionalTestLoginMixin
 
 from ...models import Article, Category
 
+# delay used after login which seems to help reliability (not sure why...)
+LOGIN_DELAY_SEC = 0.25
+
 
 class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
                           StaticLiveServerTestCase):
@@ -31,7 +34,7 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
     # updated to
     # the resulting article list order using appropriate sorting!
     UNREAD_PRIORITY_SORT_ARGS = [5, 0, 6, 1, 7, 2, 8, 3, 9, 4]
-    UNREAD_CATEGORY_SORT_ARGS = [0, 5, 1, 6, 2, 7, 3, 8, 4, 9]
+    UNREAD_CATEGORY_SORT_ARGS = [5, 0, 1, 6, 2, 7, 3, 8, 4, 9]
     UNREAD_PROGRESS_SORT_ARGS = [9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
     READ_PRIORITY_SORT_ARGS = [10, 15, 11, 12, 13, 14]
     READ_CATEGORY_SORT_ARGS = [10, 15, 11, 12, 13, 14]
@@ -164,7 +167,7 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
     def test_load_article_empty_list(self):
         self._login(urljoin(self.live_server_url, reverse('login')))
         # seems to help to have a delay between login and next page access
-        time.sleep(1)
+        time.sleep(LOGIN_DELAY_SEC)
         url = urljoin(self.live_server_url, reverse('article_list'))
         self.selenium.get(url)
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
@@ -174,11 +177,10 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
         self._create_article_list()
         self._login(urljoin(self.live_server_url, reverse('login')))
         # seems to help to have a delay between login and next page access
-        time.sleep(1)
+        time.sleep(LOGIN_DELAY_SEC)
         url = urljoin(self.live_server_url, reverse('article_list'))
         self.selenium.get(url)
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
-
         # test default is priority sorting
         self._check_article_list_ordering(self.UNREAD_PRIORITY_SORT_ARGS,
                                           self.NUM_UNREAD_ARTICLES, 'unread')
@@ -190,7 +192,6 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
         self._check_article_list_ordering(self.UNREAD_PROGRESS_SORT_ARGS,
                                           self.NUM_UNREAD_ARTICLES, 'unread')
-
         # click on cateogry column header to switch to sort by category
         cat_col_header = self.selenium.find_element_by_link_text('Category')
         self.assertIsNotNone(cat_col_header)
@@ -227,7 +228,7 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
         self._create_article_list()
         self._login(urljoin(self.live_server_url, reverse('login')))
         # seems to help to have a delay between login and next page access
-        time.sleep(1)
+        time.sleep(LOGIN_DELAY_SEC)
         url = urljoin(self.live_server_url, reverse('article_list'))
         self.selenium.get(url)
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
@@ -315,7 +316,7 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
 
         self._login(urljoin(self.live_server_url, reverse('login')))
         # seems to help to have a delay between login and next page access
-        time.sleep(1)
+        time.sleep(LOGIN_DELAY_SEC)
 
         # load page
         url = urljoin(self.live_server_url, reverse('article_list'))
@@ -388,7 +389,7 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
 
         self._login(urljoin(self.live_server_url, reverse('login')))
         # seems to help to have a delay between login and next page access
-        time.sleep(1)
+        time.sleep(LOGIN_DELAY_SEC)
 
         url = urljoin(self.live_server_url, reverse('article_list'))
         self.selenium.get(url)

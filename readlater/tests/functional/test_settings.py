@@ -9,6 +9,9 @@ from django.urls import reverse
 from .utils import FunctionalTestBaseMixin, FunctionalTestLoginMixin
 from ...models import Category
 
+# delay used after login which seems to help reliability (not sure why...)
+LOGIN_DELAY_SEC = 0.25
+
 
 class SettingsTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
                        StaticLiveServerTestCase):
@@ -69,7 +72,7 @@ class SettingsTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
     def test_load_settings_empty_list(self):
         self._login(urljoin(self.live_server_url, reverse('login')))
         # seems to help to have a delay between login and next page access
-        time.sleep(1)
+        time.sleep(LOGIN_DELAY_SEC)
         url = urljoin(self.live_server_url, reverse('settings'))
         self.selenium.get(url)
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
@@ -79,7 +82,7 @@ class SettingsTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
         self._create_category_list()
         self._login(urljoin(self.live_server_url, reverse('login')))
         # seems to help to have a delay between login and next page access
-        time.sleep(1)
+        time.sleep(LOGIN_DELAY_SEC)
         url = urljoin(self.live_server_url, reverse('settings'))
         self.selenium.get(url)
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
@@ -90,7 +93,7 @@ class SettingsTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
         self._create_category_list()
         self._login(urljoin(self.live_server_url, reverse('login')))
         # seems to help to have a delay between login and next page access
-        time.sleep(1)
+        time.sleep(LOGIN_DELAY_SEC)
         url = urljoin(self.live_server_url, reverse('settings'))
         self.selenium.get(url)
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
@@ -132,7 +135,7 @@ class SettingsTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
     def test_load_settings_create_category(self):
         self._login(urljoin(self.live_server_url, reverse('login')))
         # seems to help to have a delay between login and next page access
-        time.sleep(1)
+        time.sleep(LOGIN_DELAY_SEC)
         # verify no categories exist
         self.assertEqual(len(Category.objects.all()), 0)
         url = urljoin(self.live_server_url, reverse('settings'))
@@ -171,7 +174,7 @@ class SettingsTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
         categ = Category.objects.create(name='Category 0')
         self._login(urljoin(self.live_server_url, reverse('login')))
         # seems to help to have a delay between login and next page access
-        time.sleep(1)
+        time.sleep(LOGIN_DELAY_SEC)
         url = urljoin(self.live_server_url, reverse('settings'))
         self.selenium.get(url)
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))

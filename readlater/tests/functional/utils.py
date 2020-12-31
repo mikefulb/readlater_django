@@ -160,7 +160,7 @@ class FunctionalTestUnauthAccessMixin:
         self.selenium.get(get_url)
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
         # seems to help test not hang
-        time.sleep(1)
+        time.sleep(0.25)
         redirect_url = urljoin(self.live_server_url, get_login_redirect_url(url))
         self.assertEqual(redirect_url, self.selenium.current_url)
         self.assertIn(self.LOGIN_PAGE_TEXT, self.selenium.page_source)
