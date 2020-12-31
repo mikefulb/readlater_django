@@ -5,3 +5,6 @@ django-crispy-forms~=1.10.0
 
 # TESTING
 coverage == 5.3
+requests
+selenium
+geckodriver
