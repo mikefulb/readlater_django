@@ -5,6 +5,7 @@ from .models import Article, Category
 
 
 class ArticleCreateForm(forms.ModelForm):
+    """Form for creating a new Article."""
 
     class Meta:
         model = Article
@@ -20,6 +21,7 @@ class ArticleCreateForm(forms.ModelForm):
 
 
 class ArticleEditForm(forms.ModelForm):
+    """Form for editing an existing Article record."""
 
     class Meta:
         model = Article
@@ -35,13 +37,14 @@ class ArticleEditForm(forms.ModelForm):
 
 
 class CategoryCreateForm(forms.ModelForm):
-
+    """Form for creating a new Category."""
     class Meta:
         model = Category
         fields = ['name']
 
 
 class CategoryEditForm(forms.ModelForm):
+    """Form for editing an existing Category."""
 
     class Meta:
         model = Category

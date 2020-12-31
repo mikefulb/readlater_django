@@ -7,7 +7,8 @@ register = Library()
 #     """
 #     Return a nice string for the time since 'value'.
 #
-#     For a time delta this routine will return the largest non-zero value of the time delta and truncate the rest.
+#     For a time delta this routine will return the largest non-zero value of the
+#     time delta and truncate the rest.
 #
 #     Example usage in template:
 #
@@ -27,13 +28,15 @@ def nice_timesince(value, utc_offset=0):
     """
     Return a nice string for the time since 'value'.
 
-    For a time delta this routine will return the largest non-zero value of the time delta and truncate the rest.
+    For a time delta this routine will return the largest non-zero value of the time
+    delta and truncate the rest.
 
     Example usage in template:
 
     {{ my_datetime|nice_timesince }}
 
-    Note: Assumes time value is for UTC time zone.  Use utc_offset to specify an offset from UTC.
+    Note: Assumes time value is for UTC time zone.  Use utc_offset to specify an
+    offset from UTC.
 
     """
 

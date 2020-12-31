@@ -56,7 +56,7 @@ class ArticleList(LoginRequiredMixin, generic.ListView):
         return order_col
 
     def get(self, request, *args, **kwargs):
-        # reject invalid state request (read or unread only allowed)
+        """Reject invalid state request (read or unread only allowed)."""
         state = kwargs.get('state')
         if state not in ['read', 'unread', None]:
             raise Http404(f'Invalid article listing state "{state}"! '
@@ -65,6 +65,7 @@ class ArticleList(LoginRequiredMixin, generic.ListView):
         return super().get(self, request, *args, **kwargs)
 
     def get_queryset(self):
+        """Create queryset based on possible query arguments."""
         order_col = self._get_order_col_via_url(clean=False)
 
         # find secondary ordering priorities if any
@@ -76,6 +77,7 @@ class ArticleList(LoginRequiredMixin, generic.ListView):
             return self.model.objects.filter(progress__lt=100).order_by(*order_hier)
 
     def get_context_data(self, *, object_list=None, **kwargs):
+        """Add required parameters to context."""
         # Call the base implementation first to get a context
         context = super().get_context_data(**kwargs)
 
