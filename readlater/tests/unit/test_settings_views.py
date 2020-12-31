@@ -143,7 +143,7 @@ class CategoryDeleteViewTest(TestUserMixin, TestCase):
         self.assertContains(response, '<h4>Delete Category</h4>', status_code=200)
 
         # also test using name
-        response = self.client.get(reverse('category_delete_form', kwargs={'pk': 1}))
+        response = self.client.get(reverse('category_delete_form', kwargs={'pk': categ_id}))
         self.assertContains(response, '<h4>Delete Category</h4>', status_code=200)
 
     def test_category_delete_uses_correct_template(self):

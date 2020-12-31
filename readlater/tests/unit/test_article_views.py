@@ -172,11 +172,12 @@ class ArticleCreateNewViewTest(TestUserMixin, TestCase):
     def test_article_create_form_valid_post(self):
         self._login()
         self.assertEqual(len(Article.objects.all()), 0)
+        categ = Category.objects.get(name='Category')
         response = self.client.post(reverse('article_create_form'),
                                     data={'name': 'Article',
                                           'notes': 'Notes',
                                           'url': 'http://this.org/index.html',
-                                          'category': 1,
+                                          'category': categ.id,
                                           'priority': 200,
                                           }, follow=True)
         self.assertEqual(response.status_code, 200)
@@ -193,25 +194,27 @@ class ArticleEditViewTest(TestUserMixin, TestCase):
 
         # skip over the uncategorized category record created in migration
         categ = Category.objects.get(name='Category 1')
-        Article.objects.create(name=f'Article 1',
+        Article.objects.create(name='Article 1',
                                category=categ,
                                priority=200,
                                progress=10)
 
     def test_article_edit_url_exists(self):
         self._login()
-        response = self.client.get('/readlater/article/edit/1')
+        article_id = Article.objects.get(name='Article 1').id
+        response = self.client.get(f'/readlater/article/edit/{article_id}')
 
         # test that 'Read' is a link to the read page from the unread page
         self.assertContains(response, '<h4>Edit Article</h4>', status_code=200)
 
         # also test using name
-        response = self.client.get(reverse('article_edit_form', kwargs={'pk': 1}))
+        response = self.client.get(reverse('article_edit_form', kwargs={'pk': article_id}))
         self.assertContains(response, '<h4>Edit Article</h4>', status_code=200)
 
     def test_article_edit_uses_correct_template(self):
         self._login()
-        response = self.client.get('/readlater/article/edit/1')
+        article_id = Article.objects.get(name='Article 1').id
+        response = self.client.get(f'/readlater/article/edit/{article_id}')
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'readlater/article_edit_form.html')
 
@@ -290,13 +293,15 @@ class ArticleEditViewTest(TestUserMixin, TestCase):
 
     def test_article_edit_form_valid_post(self):
         self._login()
+        article_id = Article.objects.get(name='Article 1').id
         for state in ['unread', 'read']:
-            url = reverse('article_edit_form', args=(1,))
+            url = reverse('article_edit_form', args=(article_id,))
+            categ = Category.objects.get(name='Category 1')
             response = self.client.post(url + '?' + urlencode({'state': state}),
                                         data={'name': 'Article',
                                               'notes': 'Notes',
                                               'url': 'http://this.org/index.html',
-                                              'category': 1,
+                                              'category': categ.id,
                                               'priority': 200,
                                               'progress': 50
                                               }, follow=True)
@@ -316,7 +321,7 @@ class ArticleDeleteViewTest(TestUserMixin, TestCase):
 
         # skip over the uncategorized category record created in migration
         categ = Category.objects.get(name='Category 1')
-        Article.objects.create(name=f'Article 1',
+        Article.objects.create(name='Article 1',
                                category=categ,
                                priority=200,
                                progress=10)
@@ -326,24 +331,27 @@ class ArticleDeleteViewTest(TestUserMixin, TestCase):
 
     def test_article_delete_url_exists(self):
         self._login()
-        response = self.client.get('/readlater/article/delete/1')
+        article_id = Article.objects.get(name='Article 1').id
+        response = self.client.get(f'/readlater/article/delete/{article_id}')
 
         # test that 'Read' is a link to the read page from the unread page
         self.assertContains(response, '<h4>Delete Article</h4>', status_code=200)
 
         # also test using name
-        response = self.client.get(reverse('article_delete_form', kwargs={'pk': 1}))
+        response = self.client.get(reverse('article_delete_form', kwargs={'pk': article_id}))
         self.assertContains(response, '<h4>Delete Article</h4>', status_code=200)
 
     def test_article_delete_uses_correct_template(self):
         self._login()
-        response = self.client.get('/readlater/article/delete/1')
+        article_id = Article.objects.get(name='Article 1').id
+        response = self.client.get(f'/readlater/article/delete/{article_id}')
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'readlater/article_delete_form.html')
 
     def send_delete_post(self, state):
         self.assertEqual(len(Article.objects.all()), 1)
-        url = reverse('article_delete_form', args=(1,))
+        article_id = Article.objects.get(name='Article 1').id
+        url = reverse('article_delete_form', args=(article_id,))
         response = self.client.post(url + '?' + urlencode({'state': state}),
                                     data={'state': state}, follow=True)
         self.assertEqual(response.status_code, 200)
