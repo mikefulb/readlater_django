@@ -6,11 +6,12 @@ from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.urls import reverse
 
 
-from .utils import FunctionalTestBase, FunctionalTestLoginMixin
+from .utils import FunctionalTestBaseMixin, FunctionalTestLoginMixin
 from ...models import Category
 
 
-class SettingsTestCase(FunctionalTestLoginMixin, FunctionalTestBase, StaticLiveServerTestCase):
+class SettingsTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
+                       StaticLiveServerTestCase):
 
     NUM_CATEGORIES = 10
     MAX_NAME_LEN = 100
@@ -37,8 +38,10 @@ class SettingsTestCase(FunctionalTestLoginMixin, FunctionalTestBase, StaticLiveS
         Using an active webdriver object (self.selenium) search for a table body and
         examine the table rows of the article list.
 
-        :param sort_ordering_args: List of row indices matching sort order, ie. first article is 'Article <n>'
-                                   where <n> is the first element of sort_ordering_args, etc.
+        :param sort_ordering_args: List of row indices matching sort order, ie.
+                                   first article is 'Article <n>'
+                                   where <n> is the first element of
+                                   sort_ordering_args, etc.
         :type sort_ordering_args: list
         :param num_rows_expected: Number of rows expected in article list.
         :type num_rows_expected: int
@@ -80,7 +83,8 @@ class SettingsTestCase(FunctionalTestLoginMixin, FunctionalTestBase, StaticLiveS
         url = urljoin(self.live_server_url, reverse('settings'))
         self.selenium.get(url)
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
-        self._check_category_list_ordering(range(0, self.NUM_CATEGORIES), self.NUM_CATEGORIES)
+        self._check_category_list_ordering(range(0, self.NUM_CATEGORIES),
+                                           self.NUM_CATEGORIES)
 
     def test_load_settings_edit_category(self):
         self._create_category_list()
@@ -99,7 +103,8 @@ class SettingsTestCase(FunctionalTestLoginMixin, FunctionalTestBase, StaticLiveS
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
 
         # check fields
-        # TODO Need to check order of fields in form as well as just the presence of proper fields
+        # TODO Need to check order of fields in form as well as just the
+        #      presence of proper fields
         name_ele = self.selenium.find_element_by_name('name')
         self.assertIsNotNone(name_ele)
         self.assertEqual(name_ele.tag_name, 'input')
@@ -116,7 +121,8 @@ class SettingsTestCase(FunctionalTestLoginMixin, FunctionalTestBase, StaticLiveS
         name_ele.send_keys('Astronomy')
         name_ele.submit()
 
-        # wait for form to redirect and load list of categories and verify first category changed
+        # wait for form to redirect and load list of categories and verify first
+        # category changed
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
         tbody = self.selenium.find_element_by_tag_name('tbody')
         rows = tbody.find_elements_by_tag_name('tr')
@@ -134,7 +140,7 @@ class SettingsTestCase(FunctionalTestLoginMixin, FunctionalTestBase, StaticLiveS
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
 
         # find add category link
-        create_link = self.selenium.find_element_by_name('create_category_href_bottom')
+        create_link = self.selenium.find_element_by_id('create_category_href_bottom')
         create_link.click()
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
 
@@ -149,7 +155,8 @@ class SettingsTestCase(FunctionalTestLoginMixin, FunctionalTestBase, StaticLiveS
         name_ele.send_keys('Astronomy')
         name_ele.submit()
 
-        # wait for form to redirect and load list of categories and verify first category changed
+        # wait for form to redirect and load list of categories and verify first
+        # category changed
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
         tbody = self.selenium.find_element_by_tag_name('tbody')
         rows = tbody.find_elements_by_tag_name('tr')
@@ -181,7 +188,8 @@ class SettingsTestCase(FunctionalTestLoginMixin, FunctionalTestBase, StaticLiveS
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
 
         # check page text
-        self.assertIn(f'Are you sure you want to delete the category {categ.name}', self.selenium.page_source)
+        self.assertIn(f'Are you sure you want to delete the category {categ.name}',
+                      self.selenium.page_source)
 
         # find confirm button
         confirm_ele = None
@@ -192,6 +200,7 @@ class SettingsTestCase(FunctionalTestLoginMixin, FunctionalTestBase, StaticLiveS
         self.assertIsNotNone(confirm_ele)
         confirm_ele.click()
 
-        # wait for form to redirect and load list of categories and verify first category changed
+        # wait for form to redirect and load list of categories and verify first
+        # category changed
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
         self.assertIn('There are no categories', self.selenium.page_source)

@@ -6,18 +6,20 @@ from urllib.parse import urljoin
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.urls import reverse
 
-from .utils import FunctionalTestBase, FunctionalTestLoginMixin
+from .utils import FunctionalTestBaseMixin, FunctionalTestLoginMixin
 
 from ...models import Article, Category
 
 
-class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBase, StaticLiveServerTestCase):
+class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
+                          StaticLiveServerTestCase):
 
     PRIORITIES = ['Higher', 'High', 'Normal', 'Low', 'Lower']
     PRIORITY_LEVELS = [0, 100, 200, 300, 400]
 
     # NOTE: if either of these are changed must also update PRIORITY_SORT_ARGS et al!
-    # Also must update _create_article_list as it has hard coded constants to make progress,etc work!
+    # Also must update _create_article_list as it has hard coded constants to make
+    # progress,etc work!
     # So don't change unless you plan on recreating all test data
     # TODO Generate all test data based on these values automatically
     NUM_UNREAD_ARTICLES = 10
@@ -25,7 +27,8 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBase, StaticLi
     NUM_ARTICLES = NUM_READ_ARTICLES + NUM_UNREAD_ARTICLES
     NUM_CATEGORIES = 5
 
-    # NOTE: if NUM_ARTICLES or NUM_CATEGORIES is changed then this list has to be updated to
+    # NOTE: if NUM_ARTICLES or NUM_CATEGORIES is changed then this list has to be
+    # updated to
     # the resulting article list order using appropriate sorting!
     UNREAD_PRIORITY_SORT_ARGS = [5, 0, 6, 1, 7, 2, 8, 3, 9, 4]
     UNREAD_CATEGORY_SORT_ARGS = [0, 5, 1, 6, 2, 7, 3, 8, 4, 9]
@@ -34,10 +37,11 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBase, StaticLi
     READ_CATEGORY_SORT_ARGS = [10, 15, 11, 12, 13, 14]
     READ_PROGRESS_SORT_ARGS = [10, 15, 11, 12, 13, 14]
 
-    # TODO Need to make functions for generating record values (article, note, etc) from the
-    #      pk in the database so it is algorithmically possible to generate a record
-    #      given a pk and also find the pk given a record.  Currently everything is hard
-    #      coded or duplicated so maintenance would be more difficult than it should be.
+    # TODO Need to make functions for generating record values (article, note, etc)
+    #      from the pk in the database so it is algorithmically possible to generate
+    #      a record given a pk and also find the pk given a record.  Currently
+    #      everything is hard coded or duplicated so maintenance would be more
+    #      difficult than it should be.
 
     MAX_NAME_LEN = 100
     MAX_NOTES_LEN = 100
@@ -110,7 +114,8 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBase, StaticLi
         Using an active webdriver object (self.selenium) search for a table body and
         examine the table rows of the article list.
 
-        :param sort_ordering_args: List of row indices matching sort order, ie. first article is 'Article <n>'
+        :param sort_ordering_args: List of row indices matching sort order, ie.
+                                   first article is 'Article <n>'
                                    where <n> is the first element of sort_ordering_args, etc.
         :type sort_ordering_args: list
         :param num_rows_expected: Number of rows expected in article list.
@@ -175,42 +180,48 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBase, StaticLi
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
 
         # test default is priority sorting
-        self._check_article_list_ordering(self.UNREAD_PRIORITY_SORT_ARGS, self.NUM_UNREAD_ARTICLES, 'unread')
+        self._check_article_list_ordering(self.UNREAD_PRIORITY_SORT_ARGS,
+                                          self.NUM_UNREAD_ARTICLES, 'unread')
 
         # click on progress column header to switch to sort by category
         prog_col_header = self.selenium.find_element_by_link_text('Progress')
         self.assertIsNotNone(prog_col_header)
         prog_col_header.click()
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
-        self._check_article_list_ordering(self.UNREAD_PROGRESS_SORT_ARGS, self.NUM_UNREAD_ARTICLES, 'unread')
+        self._check_article_list_ordering(self.UNREAD_PROGRESS_SORT_ARGS,
+                                          self.NUM_UNREAD_ARTICLES, 'unread')
 
         # click on cateogry column header to switch to sort by category
         cat_col_header = self.selenium.find_element_by_link_text('Category')
         self.assertIsNotNone(cat_col_header)
         cat_col_header.click()
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
-        self._check_article_list_ordering(self.UNREAD_CATEGORY_SORT_ARGS, self.NUM_UNREAD_ARTICLES, 'unread')
+        self._check_article_list_ordering(self.UNREAD_CATEGORY_SORT_ARGS,
+                                          self.NUM_UNREAD_ARTICLES, 'unread')
 
         # switch to read articles
         read_anchor = self.selenium.find_element_by_link_text('Read')
         self.assertIsNotNone(read_anchor)
         read_anchor.click()
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
-        self._check_article_list_ordering(self.READ_PRIORITY_SORT_ARGS, self.NUM_READ_ARTICLES, 'read')
+        self._check_article_list_ordering(self.READ_PRIORITY_SORT_ARGS,
+                                          self.NUM_READ_ARTICLES, 'read')
 
         # click on progress column header to switch to sort by category
         prog_col_header = self.selenium.find_element_by_link_text('Progress')
         self.assertIsNotNone(prog_col_header)
         prog_col_header.click()
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
-        self._check_article_list_ordering(self.READ_PROGRESS_SORT_ARGS, self.NUM_READ_ARTICLES, 'read')
+        self._check_article_list_ordering(self.READ_PROGRESS_SORT_ARGS,
+                                          self.NUM_READ_ARTICLES, 'read')
 
         # click on cateogry column header to switch to sort by category
         cat_col_header = self.selenium.find_element_by_link_text('Category')
         self.assertIsNotNone(cat_col_header)
         cat_col_header.click()
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
-        self._check_article_list_ordering(self.READ_CATEGORY_SORT_ARGS, self.NUM_READ_ARTICLES, 'read')
+        self._check_article_list_ordering(self.READ_CATEGORY_SORT_ARGS,
+                                          self.NUM_READ_ARTICLES, 'read')
 
     def test_load_article_edit_article(self):
         self._create_article_list()
@@ -229,7 +240,8 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBase, StaticLi
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
 
         # check fields
-        # TODO Need to check order of fields in form as well as just the presence of proper fields
+        # TODO Need to check order of fields in form as well as just the presence
+        #      of proper fields
         name_ele = self.selenium.find_element_by_name('name')
         self.assertIsNotNone(name_ele)
         self.assertEqual(name_ele.tag_name, 'input')
@@ -251,8 +263,10 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBase, StaticLi
         self.assertIsNotNone(cat_ele)
         self.assertEqual(cat_ele.tag_name, 'select')
         option_eles = cat_ele.find_elements_by_tag_name('option')
-        selected = next(filter(None, (i for i, x in enumerate(option_eles) if x.get_attribute('selected') is not None)))
-        self.assertEqual(f'Category {index % self.NUM_CATEGORIES}', option_eles[selected].text)
+        selected = next(filter(None, (i for i, x in enumerate(option_eles) \
+                                      if x.get_attribute('selected') is not None)))
+        self.assertEqual(f'Category {index % self.NUM_CATEGORIES}',
+                         option_eles[selected].text)
 
         # test number of categories offered - including the '------'
         # option in additon to NUM_CATEGORIES created in _create_article_list()
@@ -284,7 +298,8 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBase, StaticLi
         name_ele.send_keys('Astronomy')
         name_ele.submit()
 
-        # wait for redirect from form to load list of article and verify first category changed
+        # wait for redirect from form to load list of article and verify first
+        # category changed
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
         tbody = self.selenium.find_element_by_tag_name('tbody')
         rows = tbody.find_elements_by_tag_name('tr')
@@ -308,7 +323,7 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBase, StaticLi
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
 
         # find add article link
-        create_link = self.selenium.find_element_by_name('create_article_href_bottom')
+        create_link = self.selenium.find_element_by_id('create_article_href_bottom')
         create_link.click()
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
 
@@ -350,7 +365,8 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBase, StaticLi
         # enter category and submit
         name_ele.submit()
 
-        # wait for form to redirect and load list of categories and verify first category changed
+        # wait for form to redirect and load list of categories and verify first
+        # category changed
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
         tbody = self.selenium.find_element_by_tag_name('tbody')
         rows = tbody.find_elements_by_tag_name('tr')
@@ -390,7 +406,8 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBase, StaticLi
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
 
         # check page text
-        self.assertIn(f'Are you sure you want to delete the article {str(art)}', self.selenium.page_source)
+        self.assertIn(f'Are you sure you want to delete the article {str(art)}',
+                      self.selenium.page_source)
 
         # find confirm button
         confirm_ele = None
@@ -401,6 +418,7 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBase, StaticLi
         self.assertIsNotNone(confirm_ele)
         confirm_ele.click()
 
-        # wait for form to redirect and load list of categories and verify first category changed
+        # wait for form to redirect and load list of categories and verify first
+        # category changed
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
         self.assertIn('There are no articles', self.selenium.page_source)

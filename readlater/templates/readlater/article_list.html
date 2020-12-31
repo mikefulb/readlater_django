@@ -24,7 +24,7 @@ Article List
 {% block content %}
 
 {% if article_list %}
-<a href="{% url 'article_create_form' %}" name="create_article_href_top">Create Article</a>
+<a href="{% url 'article_create_form' %}" id="create_article_href_top">Create Article</a>
 <table class="table table-striped">
   <thead class="thead-dark">
     <th>Link</th>
@@ -91,5 +91,5 @@ Article List
 <p>There are no articles.</p>
 {% endif %}
 <br>
-<a href="{% url 'article_create_form' %}" name="create_article_href_bottom">Create Article</a>
+<a href="{% url 'article_create_form' %}" id="create_article_href_bottom">Create Article</a>
 {% endblock %}

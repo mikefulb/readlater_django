@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}
-Settings
+    Settings
 {% endblock title %}
 
 {% block breadcrumb %}
@@ -9,32 +9,34 @@ Settings
 {% endblock %}
 
 {% block content %}
-{% if category_list %}
-<h4>Categories</h4>
-<a href="{% url 'category_create_form' %}" name="create_category_href_top">Create Category</a>
-<br>
-<table class="table table-striped">
-  <thead class="thead-dark">
-    <th>Name</th>
-    <th></th>
-    <th></th>
-</thead>
-  <tbody>
-    {% for category in category_list %}
-      <tr>
-          <td>{{ category.name }}</td>
-          <td><a href="{% url 'category_edit_form' category.pk %}">EDIT</a></td>
-          {% ifnotequal category.name|lower 'uncategorized' %}
-            <td><a href="{% url 'category_delete_form' category.pk %}">DELETE</a></td>
-          {% else %}
-            <td></td>
-          {% endifnotequal %}
-     </tr>
-    {% endfor %}
-  </tbody>
-</table>
-{% else %}
-<p>There are no categories.</p>
-{% endif %}
-<a href="{% url 'category_create_form' %}" name="create_category_href_bottom">Create Category</a>
+    {% if category_list %}
+        <h4>Categories</h4>
+        <a href="{% url 'category_create_form' %}" id="create_category_href_top">Create Category</a>
+        <br>
+        <table class="table table-striped">
+            <thead class="thead-dark">
+            <tr>
+                <th>Name</th>
+                <th></th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for category in category_list %}
+                <tr>
+                    <td>{{ category.name }}</td>
+                    <td><a href="{% url 'category_edit_form' category.pk %}">EDIT</a></td>
+                    {% ifnotequal category.name|lower 'uncategorized' %}
+                        <td><a href="{% url 'category_delete_form' category.pk %}">DELETE</a></td>
+                    {% else %}
+                        <td></td>
+                    {% endifnotequal %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>There are no categories.</p>
+    {% endif %}
+    <a href="{% url 'category_create_form' %}" id="create_category_href_bottom">Create Category</a>
 {% endblock %}
