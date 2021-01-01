@@ -16,21 +16,9 @@ import dj_database_url
 
 # from decouple import Csv, config
 
-
-def load_env(env, default=None, enforce=True):
-    if not enforce:
-        value = os.environ.get(env, default)
-    else:
-        if default is not None:
-            logging.warning(f'Default {default} ignored for env {env}'
-                            'since enforce=True.')
-        value = os.environ.get(env, None)
-        if value is None:
-            raise ValueError(f'Env {env} not set!')
-    return value
-
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
+from readlater_django.utils import load_env
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
