@@ -28,7 +28,7 @@ SECRET_KEY = load_env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = load_env('DEBUG')
 
-ALLOWED_HOSTS = load_env('ALLOWED_HOSTS')
+ALLOWED_HOSTS = load_env('ALLOWED_HOSTS').split(',')
 
 # Application definition
 
