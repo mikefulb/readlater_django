@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = load_env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = load_env('DEBUG')
+DEBUG = load_env('DEBUG').lower() == 'true'
 
 ALLOWED_HOSTS = load_env('ALLOWED_HOSTS').split(',')
 
