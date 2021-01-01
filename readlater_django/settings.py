@@ -12,21 +12,35 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 import os
 import logging.config
 from pathlib import Path
-from decouple import Csv, config
+
+
+# from decouple import Csv, config
+
+
+def load_env(env, default=None, enforce=True):
+    if not enforce:
+        value = os.environ.get(env, default)
+    else:
+        if default is not None:
+            logging.warning(f'Default {default} ignored for env {env}'
+                            'since enforce=True.')
+        value = os.environ.get(env, None)
+        if value is None:
+            raise ValueError(f'Env {env} not set!')
+    return value
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
-
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY')
+# SECRET_KEY = config('SECRET_KEY')
+SECRET_KEY = load_env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = load_env('DEBUG')
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv())
+ALLOWED_HOSTS = load_env('ALLOWED_HOSTS')
 
 # Application definition
 
@@ -73,7 +87,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'readlater_django.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
@@ -86,12 +99,12 @@ WSGI_APPLICATION = 'readlater_django.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': config('DATABASE_ENGINE'),
-        'NAME': config('DATABASE_NAME'),
-        'USER': config('DATABASE_USER'),
-        'PASSWORD': config('DATABASE_PASSWORD'),
-        'HOST': config('DATABASE_HOST'),
-        'PORT': config('DATABASE_PORT'),
+        'ENGINE': load_env('DATABASE_ENGINE'),
+        'NAME': load_env('DATABASE_NAME'),
+        'USER': load_env('DATABASE_USER'),
+        'PASSWORD': load_env('DATABASE_PASSWORD'),
+        'HOST': load_env('DATABASE_HOST'),
+        'PORT': load_env('DATABASE_PORT'),
     }
 }
 
@@ -123,7 +136,7 @@ LOGIN_REDIRECT_URL = 'home'
 LOGGING_CONFIG = None
 
 # Get loglevel from env
-LOGLEVEL = config('DJANGO_LOGLEVEL', 'info').upper()
+LOGLEVEL = load_env('DJANGO_LOGLEVEL', default='info', enforce=False).upper()
 
 logging.config.dictConfig({
     'version': 1,
@@ -169,7 +182,6 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
