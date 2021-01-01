@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 import os
 import logging.config
 from pathlib import Path
-
+import dj_database_url
 
 # from decouple import Csv, config
 
@@ -59,6 +59,7 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -97,16 +98,19 @@ WSGI_APPLICATION = 'readlater_django.wsgi.application'
 #     }
 # }
 
-DATABASES = {
-    'default': {
-        'ENGINE': load_env('DATABASE_ENGINE'),
-        'NAME': load_env('DATABASE_NAME'),
-        'USER': load_env('DATABASE_USER'),
-        'PASSWORD': load_env('DATABASE_PASSWORD'),
-        'HOST': load_env('DATABASE_HOST'),
-        'PORT': load_env('DATABASE_PORT'),
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': load_env('DATABASE_ENGINE'),
+#         'NAME': load_env('DATABASE_NAME'),
+#         'USER': load_env('DATABASE_USER'),
+#         'PASSWORD': load_env('DATABASE_PASSWORD'),
+#         'HOST': load_env('DATABASE_HOST'),
+#         'PORT': load_env('DATABASE_PORT'),
+#     }
+# }
+
+DATABASES = {}
+DATABASES['default'] = dj_database_url.config(conn_max_age=600)
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators

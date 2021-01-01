@@ -3,6 +3,7 @@ django                           # == 3.1.4
 #python-decouple == 3.3          # needed to parse secrets from .env
 django-crispy-forms              #~=1.10.0
 psycopg2
+dj_database_url
 gunicorn
 
 # TESTING
