@@ -76,27 +76,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'readlater_django.wsgi.application'
 
-# Database
-# https://docs.djangoproject.com/en/3.1/ref/settings/#databases
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': load_env('DATABASE_ENGINE'),
-#         'NAME': load_env('DATABASE_NAME'),
-#         'USER': load_env('DATABASE_USER'),
-#         'PASSWORD': load_env('DATABASE_PASSWORD'),
-#         'HOST': load_env('DATABASE_HOST'),
-#         'PORT': load_env('DATABASE_PORT'),
-#     }
-# }
-
 DATABASES = {}
 DATABASES['default'] = dj_database_url.config(conn_max_age=600)
 
@@ -120,7 +99,6 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'home'
-# LOGOUT_REDIRECT_URL = 'home'
 
 # Logging configuration
 
@@ -177,6 +155,8 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 STATIC_URL = '/static/'
 
