@@ -1,1 +1,1 @@
-web: gunicorn readlater-django.wsgi --log-file -
+web: gunicorn readlater_django.wsgi --log-file -
