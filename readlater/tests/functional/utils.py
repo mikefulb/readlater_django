@@ -50,14 +50,28 @@ def wait(fn):
 class FunctionalTestBaseMixin:
     """
     Mixin which handles creating an object attribute 'selenium' which is a webdriver
-    for Firefox as well as 'staging_server' which is the live test server info.
+    for the proper browser driver as well as 'staging_server' which is the live test
+    server info.
 
     Intended to be used with the LiveServerTestCase and StaticLiveServerTestCase.
     """
 
     def setUp(self):
         super().setUp()
-        self.selenium = webdriver.Firefox()
+        driver = os.environ.get('SELENIUM_DRIVER', 'firefox')
+        if driver.lower() == 'firefox':
+            self.selenium = webdriver.Firefox()
+        elif driver.lower() == 'chrome':
+            chrome_options = webdriver.ChromeOptions()
+            chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
+            chrome_options.add_argument("--headless")
+            chrome_options.add_argument("--disable-dev-shm-usage")
+            chrome_options.add_argument("--no-sandbox")
+            self.selenium = webdriver.Chrome(
+                executable_path=os.environ.get("CHROMEDRIVER_PATH"),
+                chrome_options=chrome_options)
+        else:
+            raise ValueError(f'Unknown SELINIUM driver {driver} requested!')
         self.selenium.implicitly_wait(10)
         self.staging_server = os.environ.get('STAGING_SERVER')
         if self.staging_server:
