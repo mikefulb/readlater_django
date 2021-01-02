@@ -77,7 +77,12 @@ TEMPLATES = [
 WSGI_APPLICATION = 'readlater_django.wsgi.application'
 
 DATABASES = {}
-DATABASES['default'] = dj_database_url.config(conn_max_age=600)
+if os.environ.get('USE_TEST_DB'):
+    DATABASES['default'] = dj_database_url.config(env='TEST_DATABASE_URL', conn_max_age=600)
+    DATABASES['default']['TEST'] = {'NAME': DATABASES['default']['NAME']}
+else:
+    DATABASES['default'] = dj_database_url.config(conn_max_age=600)
+
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
