@@ -18,10 +18,10 @@ class ArticleListViewTest(TestUserMixin, TestCase):
     NUM_ARTICLES = 10
     NUM_CATEGORIES = 5
 
-    @classmethod
-    def setUpTestData(cls):
+    def setUp(self):
+        super().setUp()
         for categ_id in range(ArticleListViewTest.NUM_CATEGORIES):
-            Category.objects.create(name=f'Category {categ_id}')
+            Category.objects.create(name=f'Category {categ_id}', created_by=self.user)
 
         # skip over the uncategorized category record created in migration
         categ_id = 0
@@ -31,7 +31,8 @@ class ArticleListViewTest(TestUserMixin, TestCase):
             Article.objects.create(name=f'Article {article_id}',
                                    category=art_categ,
                                    priority=article_id * 100,
-                                   progress=article_id * 10)
+                                   progress=article_id * 10,
+                                   created_by=self.user)
 
     def test_view_url_exists(self):
         # FIXME need to add some finished articles and verify only those
@@ -96,9 +97,9 @@ class ArticleCreateNewViewTest(TestUserMixin, TestCase):
     MAX_NOTES_LEN = 100
     MAX_URL_LEN = 400
 
-    @classmethod
-    def setUpTestData(cls):
-        Category.objects.create(name='Category')
+    def setUp(self):
+        super().setUp()
+        Category.objects.create(name='Category', created_by=self.user)
 
     def test_article_create_url_exists(self):
         self._login()
@@ -189,15 +190,16 @@ class ArticleEditViewTest(TestUserMixin, TestCase):
 
     def setUp(self):
         super().setUp()
-        Category.objects.create(name='Category 1')
-        Category.objects.create(name='Category 2')
+        Category.objects.create(name='Category 1', created_by=self.user)
+        Category.objects.create(name='Category 2', created_by=self.user)
 
         # skip over the uncategorized category record created in migration
         categ = Category.objects.get(name='Category 1')
         Article.objects.create(name='Article 1',
                                category=categ,
                                priority=200,
-                               progress=10)
+                               progress=10,
+                               created_by=self.user)
 
     def test_article_edit_url_exists(self):
         self._login()
@@ -317,14 +319,15 @@ class ArticleDeleteViewTest(TestUserMixin, TestCase):
 
     def setUp(self):
         super().setUp()
-        Category.objects.create(name='Category 1')
+        Category.objects.create(name='Category 1', created_by=self.user)
 
         # skip over the uncategorized category record created in migration
         categ = Category.objects.get(name='Category 1')
         Article.objects.create(name='Article 1',
                                category=categ,
                                priority=200,
-                               progress=10)
+                               progress=10,
+                               created_by=self.user)
 
     def tearDown(self):
         self.user.delete()

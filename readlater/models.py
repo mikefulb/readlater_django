@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
@@ -7,6 +8,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 class Category(models.Model):
     """Article categories definitions."""
     name = models.CharField(max_length=100, help_text='Category name.')
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
 
     # FIXME might be nice to add parent or children fields so we can represent a
     #       hierarchy of categories
@@ -14,15 +16,15 @@ class Category(models.Model):
     def __str__(self):
         return f'{self.name}'
 
-    @staticmethod
-    def get_uncategorized():
-        """ Returns Category object for 'Uncategorized' category"""
-        return Category.objects.get_or_create(name='Uncategorized')[0]
+    # @staticmethod
+    # def get_uncategorized():
+    #     """ Returns Category object for 'Uncategorized' category"""
+    #     return Category.objects.get_or_create(name='Uncategorized')[0]
 
 
-def get_category_uncategorized():
-    """Returns "Uncategorized" category."""
-    return Category.get_uncategorized()
+# def get_category_uncategorized():
+#     """Returns "Uncategorized" category."""
+#     return Category.get_uncategorized()
 
 
 class Article(models.Model):
@@ -49,7 +51,8 @@ class Article(models.Model):
                              help_text='Notes about article.')
     url = models.URLField(max_length=400, help_text='URL for article.')
     category = models.ForeignKey(Category, related_name='article',
-                                 on_delete=models.SET(get_category_uncategorized),
+                                 null=True, blank=True,
+                                 on_delete=models.SET_NULL,
                                  help_text='Article category.')
     priority = models.IntegerField(choices=PRIORITY_CHOICES, default=PRIORITY_NORMAL,
                                    help_text='Article priority.')
@@ -63,6 +66,7 @@ class Article(models.Model):
                                          help_text='Timestamp for when article was finished.')
     updated_time = models.DateTimeField(null=True, blank=True, editable=False,
                                         help_text='Timestamp for when progress was updated.')
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
 
     @staticmethod
     def get_absolute_url():

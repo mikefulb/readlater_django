@@ -34,7 +34,7 @@ class SettingsTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
 
         for categ_id in range(self.NUM_CATEGORIES):
             name = self._create_category_name(categ_id)
-            Category.objects.create(name=name)
+            Category.objects.create(name=name, created_by=self.user)
 
     def _check_category_list_ordering(self, sort_ordering_args, num_rows_expected):
         """
@@ -171,7 +171,7 @@ class SettingsTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
         self.assertEqual(len(Category.objects.all()), 0)
 
         # create a category
-        categ = Category.objects.create(name='Category 0')
+        categ = Category.objects.create(name='Category 0', created_by=self.user)
         self._login(urljoin(self.live_server_url, reverse('login')))
         # seems to help to have a delay between login and next page access
         time.sleep(LOGIN_DELAY_SEC)

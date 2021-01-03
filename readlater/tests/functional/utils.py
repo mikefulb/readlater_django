@@ -102,31 +102,57 @@ class FunctionalTestLoginMixin:
 
     Intended to be used with the LiveServerTestCase and StaticLiveServerTestCase.
     """
+
+    # Test user info which is generally the one which is authenticated for tests
     TEST_USERNAME = 'TestUser'
     TEST_EMAIL = 'testuser@example.com'
     TEST_PASSWORD = 'testuserpassword'
+
+    # Test user info which is generally the one which is authenticated for tests
+    # and used to test access TEST_USERNAME records while logged in as
+    # a different user
+    TEST_USERNAME_OTHER = 'TestUserOther'
+    TEST_EMAIL_OTHER = 'testuserother@example.com'
+    TEST_PASSWORD_OTHER = 'testuserotherpassword'
+
+    TEST_USERS = {
+        'primary': {
+            'username': TEST_USERNAME,
+            'email': TEST_EMAIL,
+            'password': TEST_PASSWORD,
+        },
+        'other': {
+            'username': TEST_USERNAME_OTHER,
+            'email': TEST_EMAIL_OTHER,
+            'password': TEST_PASSWORD_OTHER,
+        },
+    }
 
     def setUp(self):
         super().setUp()
         self.user = User.objects.create_user(self.TEST_USERNAME, self.TEST_EMAIL,
                                              self.TEST_PASSWORD)
-
+        self.user_other = User.objects.create_user(self.TEST_USERNAME_OTHER,
+                                                    self.TEST_EMAIL_OTHER,
+                                                    self.TEST_PASSWORD_OTHER)
     def tearDown(self):
         super().tearDown()
         self.user.delete()
+        self.user_other.delete()
 
-    def _login(self, login_url, username=TEST_USERNAME, password=TEST_PASSWORD):
+    def _login(self, login_url, user='primary'):
         """
         Sends login information and waits for redirected page to load.
 
         Modified the 'selenium' attribute of object.
 
+        Use the 'primary' user to access data entries created for tests or
+        'other' user to test that such access is forbidden.
+
         :param login_url: URL for login page.
         :type login_url: str
-        :param username: Username for login authentication.
-        :type username: str
-        :param password: Password for login authentication.
-        :type password: str
+        :param user: Either 'primary' for primary login or 'other' for other.
+        :type user: strr
         """
 
         # load page
@@ -136,11 +162,11 @@ class FunctionalTestLoginMixin:
         # enter values
         username_ele = self.selenium.find_element_by_name('username')
         self.assertIsNotNone(username_ele)
-        username_ele.send_keys(username)
+        username_ele.send_keys(self.TEST_USERS[user]['username'])
 
         password_ele = self.selenium.find_element_by_name('password')
         self.assertIsNotNone(password_ele)
-        password_ele.send_keys(password)
+        password_ele.send_keys(self.TEST_USERS[user]['password'])
 
         # submit
         password_ele.submit()

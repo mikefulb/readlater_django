@@ -89,7 +89,7 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
         categ = self._create_article_category(index)
         priority = self._create_article_priority_level(index)
         progress = self._create_article_progress(index)
-        art_categ, _ = Category.objects.get_or_create(name=categ)
+        art_categ, _ = Category.objects.get_or_create(name=categ, created_by=self.user)
         updated = None
         finish = None
         if progress > 0:
@@ -103,7 +103,8 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
                                priority=priority,
                                progress=progress,
                                updated_time=updated,
-                               finished_time=finish)
+                               finished_time=finish,
+                               created_by=self.user)
 
     def _create_article_list(self):
         # database should be wiped at start of test
@@ -312,7 +313,7 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
         self.assertEqual(len(Article.objects.all()), 0)
 
         # create a category
-        categ = Category.objects.create(name='Category 0')
+        categ = Category.objects.create(name='Category 0', created_by=self.user)
 
         self._login(urljoin(self.live_server_url, reverse('login')))
         # seems to help to have a delay between login and next page access

@@ -4,6 +4,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from readlater.models import Article, Category
+from readlater.tests.unit.utils import TestUserMixin
 
 MAX_ARTICLE_NAME_LEN = 100
 MAX_CATEGORY_NAME_LEN = 100
@@ -11,18 +12,24 @@ MAX_NOTES_LEN = 100
 MAX_URL_LEN = 400
 
 
-class CategoryModelTest(TestCase):
+class CategoryModelTest(TestUserMixin, TestCase):
 
     TEST_CATEGORY_NAME = 'TestCategory'
 
-    @classmethod
-    def setUpTestData(cls):
-        Category.objects.create(name=CategoryModelTest.TEST_CATEGORY_NAME)
+    # @classmethod
+    # def setUpTestData(cls):
+    #     Category.objects.create(name=CategoryModelTest.TEST_CATEGORY_NAME,
+    #                             created_by=self.user)
 
-    def test_create_uncat_record(self):
-        # make sure uncategorized record can be created
-        categ = Category.get_uncategorized()
-        self.assertEqual(categ.name, 'Uncategorized')
+    # def test_create_uncat_record(self):
+    #     # make sure uncategorized record can be created
+    #     categ = Category.get_uncategorized()
+    #     self.assertEqual(categ.name, 'Uncategorized')
+
+    def setUp(self):
+        super().setUp()
+        Category.objects.create(name=CategoryModelTest.TEST_CATEGORY_NAME,
+                                created_by=self.user)
 
     def test_name_label(self):
         categ = Category.objects.get(name=CategoryModelTest.TEST_CATEGORY_NAME)
@@ -39,7 +46,7 @@ class CategoryModelTest(TestCase):
         self.assertEqual(max_length, MAX_CATEGORY_NAME_LEN)
 
 
-class ArticleModelTest(TestCase):
+class ArticleModelTest(TestUserMixin, TestCase):
 
     TEST_ARTICLE_NAME = 'TestArticleName'
     TEST_ARTICLE_NOTE = 'TestNotes'
@@ -50,9 +57,11 @@ class ArticleModelTest(TestCase):
     TEST_ARTICLE_FINISHED = datetime(2020, 12, 2, 10, 20, 30, 0, tzinfo=timezone.utc)
     TEST_ARTICLE_UPDATED = TEST_ARTICLE_FINISHED
 
-    @classmethod
-    def setUpTestData(cls):
-        categ = Category.objects.get_or_create(name='Category 1')[0]
+    # @classmethod
+    # def setUpTestData(cls):
+    def setUp(self):
+        super().setUp()
+        categ = Category.objects.get_or_create(name='Category 1', created_by=self.user)[0]
         Article.objects.create(name=ArticleModelTest.TEST_ARTICLE_NAME,
                                notes=ArticleModelTest.TEST_ARTICLE_NOTE,
                                url=ArticleModelTest.TEST_ARTICLE_URL,
@@ -62,6 +71,7 @@ class ArticleModelTest(TestCase):
                                added_time=ArticleModelTest.TEST_ARTICLE_ADDED,
                                updated_time=ArticleModelTest.TEST_ARTICLE_FINISHED,
                                finished_time=ArticleModelTest.TEST_ARTICLE_UPDATED,
+                               created_by=self.user,
                                )
 
     @staticmethod
@@ -141,7 +151,7 @@ class ArticleModelTest(TestCase):
         Test that article category is set to 'Uncategorized' if its category
         is deleted.
         """
-        categ = Category.objects.get_or_create(name='Category 2')[0]
+        categ = Category.objects.get_or_create(name='Category 2', created_by=self.user)[0]
         Article.objects.create(name='Random Article',
                                notes=ArticleModelTest.TEST_ARTICLE_NOTE,
                                url=ArticleModelTest.TEST_ARTICLE_URL,
@@ -151,7 +161,9 @@ class ArticleModelTest(TestCase):
                                added_time=ArticleModelTest.TEST_ARTICLE_ADDED,
                                updated_time=ArticleModelTest.TEST_ARTICLE_FINISHED,
                                finished_time=ArticleModelTest.TEST_ARTICLE_UPDATED,
+                               created_by=self.user,
                                )
+
         Category.objects.get(name='Category 2').delete()
         art = Article.objects.get(name='Random Article')
-        self.assertEqual(art.category.name, 'Uncategorized')
+        self.assertIsNone(art.category)

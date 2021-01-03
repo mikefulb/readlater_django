@@ -1,6 +1,6 @@
 import datetime
 
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.http import Http404, HttpResponseForbidden
 from django.views import generic
 from django.urls import reverse_lazy, reverse
@@ -95,11 +95,19 @@ class ArticleCreateView(LoginRequiredMixin, generic.CreateView):
     form_class = ArticleCreateForm
     template_name_suffix = '_create_form'
 
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
 
-class ArticleEditView(LoginRequiredMixin, generic.UpdateView):
+
+class ArticleEditView(LoginRequiredMixin, UserPassesTestMixin, generic.UpdateView):
     model = Article
     form_class = ArticleEditForm
     template_name_suffix = '_edit_form'
+
+    def test_func(self):
+        obj = self.get_object()
+        return obj.created_by == self.request.user
 
     def form_valid(self, form):
         """ Add values to instance before saving """
@@ -118,10 +126,17 @@ class ArticleEditView(LoginRequiredMixin, generic.UpdateView):
         return reverse('article_list_with_state', kwargs={'state': state})
 
 
-class ArticleDeleteView(LoginRequiredMixin, generic.DeleteView):
+class ArticleDeleteView(LoginRequiredMixin, UserPassesTestMixin, generic.DeleteView):
     model = Article
     success_url = reverse_lazy('article_list')
     template_name_suffix = '_delete_form'
+
+    def test_func(self):
+        obj = self.get_object()
+        return obj.created_by == self.request.user
+
+    def get_queryset(self):
+        return super().get_queryset().filter(created_by=self.request.user)
 
     def get_success_url(self):
         # make sure we go back to page that we were called from
@@ -147,6 +162,10 @@ class CategoryCreateView(LoginRequiredMixin, generic.CreateView):
     form_class = CategoryCreateForm
     success_url = reverse_lazy('settings')
     template_name_suffix = '_create_form'
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
 
 
 class CategoryEditView(LoginRequiredMixin, generic.UpdateView):
