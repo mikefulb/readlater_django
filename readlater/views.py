@@ -72,9 +72,13 @@ class ArticleList(LoginRequiredMixin, generic.ListView):
         order_hier = self._order_hier.get(self._clean_order_col(order_col),
                                           (order_col,))
         if self.kwargs.get('state') == 'read':
-            return self.model.objects.filter(progress=100).order_by(*order_hier)
+            return self.model.objects.filter(progress=100,
+                                             created_by=self.request.user).order_by(
+                *order_hier)
         else:
-            return self.model.objects.filter(progress__lt=100).order_by(*order_hier)
+            return self.model.objects.filter(progress__lt=100,
+                                             created_by=self.request.user).order_by(
+                *order_hier)
 
     def get_context_data(self, *, object_list=None, **kwargs):
         """Add required parameters to context."""
@@ -152,34 +156,47 @@ class SettingsView(LoginRequiredMixin, generic.base.TemplateView):
         context = super().get_context_data(**kwargs)
 
         # if state is not defined then default to unread listing
-        context['category_list'] = Category.objects.all().order_by('name')
+        context['category_list'] = Category.objects.all().order_by('name').filter(
+            created_by=self.request.user)
 
         return context
 
 
-class CategoryCreateView(LoginRequiredMixin, generic.CreateView):
+class CategoryCreateView(LoginRequiredMixin, UserPassesTestMixin, generic.CreateView):
     model = Category
     form_class = CategoryCreateForm
     success_url = reverse_lazy('settings')
     template_name_suffix = '_create_form'
+
+    def test_func(self):
+        obj = self.get_object()
+        return obj.created_by == self.request.user
 
     def form_valid(self, form):
         form.instance.created_by = self.request.user
         return super().form_valid(form)
 
 
-class CategoryEditView(LoginRequiredMixin, generic.UpdateView):
+class CategoryEditView(LoginRequiredMixin, UserPassesTestMixin, generic.UpdateView):
     model = Category
     form_class = CategoryEditForm
     success_url = reverse_lazy('settings')
     template_name_suffix = '_edit_form'
 
+    def test_func(self):
+        obj = self.get_object()
+        return obj.created_by == self.request.user
 
-class CategoryDeleteView(LoginRequiredMixin, generic.DeleteView):
+class CategoryDeleteView(LoginRequiredMixin, UserPassesTestMixin, generic.DeleteView):
     model = Category
     success_url = reverse_lazy('settings')
     error_url = reverse_lazy('category_delete_failed.html')
+
     template_name_suffix = '_delete_form'
+
+    def test_func(self):
+        obj = self.get_object()
+        return obj.created_by == self.request.user
 
     def delete(self, request, *args, **kwargs):
         del_object = self.get_object()
