@@ -74,7 +74,7 @@ Article List
       <tr>
           <td><a href="{{ article.url }}">LINK</a></td>
           <td>{{ article.name }}</td>
-          <td>{{ article.category }}</td>
+          <td>{{ article.category|default_if_none:"Uncategorized" }}</td>
           <td>{{ article.notes }}</td>
           <td>{{ article.get_priority_display }}</td>
           <td>{{ article.progress }}</td>
