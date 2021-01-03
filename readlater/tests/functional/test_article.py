@@ -166,6 +166,7 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
             self.assertEqual(del_anchor, expected)
 
     def test_load_article_empty_list(self):
+        Article.objects.all().delete()
         self._login(urljoin(self.live_server_url, reverse('login')))
         # seems to help to have a delay between login and next page access
         time.sleep(LOGIN_DELAY_SEC)
