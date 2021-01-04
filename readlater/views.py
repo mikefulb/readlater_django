@@ -1,7 +1,7 @@
 import datetime
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.http import Http404, HttpResponseForbidden
+from django.http import Http404
 from django.views import generic
 from django.urls import reverse_lazy, reverse
 
@@ -9,6 +9,20 @@ from .models import Article
 from .models import Category
 from .forms import ArticleCreateForm, ArticleEditForm
 from .forms import CategoryCreateForm, CategoryEditForm
+
+
+class SortUserCategorySelectionMixin:
+    """
+    For use with create and update class views to present the category
+    select widget with the category options sorted and restricted to
+    the categories for the request user.
+    """
+    def get_form(self, form_class=None):
+        """limit category choices to those defined by request user"""
+        form = super().get_form(form_class)
+        form.fields['category'].queryset = Category.objects.filter(
+            created_by=self.request.user).order_by('name')
+        return form
 
 
 class ArticleList(LoginRequiredMixin, generic.ListView):
@@ -20,9 +34,11 @@ class ArticleList(LoginRequiredMixin, generic.ListView):
     _order_field = 'priority'
 
     _order_hier = {
-            'priority': ('priority',  '-progress'),
-            'category': ('category', 'priority', 'updated_time', '-added_time', '-progress'),
-            'progress': ('-progress', 'priority', 'updated_time', '-added_time', '-category'),
+        'priority': ('priority', '-progress', '-added_time'),
+        'category': (
+        'category', 'priority', 'updated_time', '-added_time', '-progress'),
+        'progress': (
+        '-progress', 'priority', 'updated_time', '-added_time', '-category'),
     }
 
     @staticmethod
@@ -94,7 +110,8 @@ class ArticleList(LoginRequiredMixin, generic.ListView):
         return context
 
 
-class ArticleCreateView(LoginRequiredMixin, generic.CreateView):
+class ArticleCreateView(LoginRequiredMixin, SortUserCategorySelectionMixin,
+                        generic.CreateView):
     model = Article
     form_class = ArticleCreateForm
     template_name_suffix = '_create_form'
@@ -104,7 +121,8 @@ class ArticleCreateView(LoginRequiredMixin, generic.CreateView):
         return super().form_valid(form)
 
 
-class ArticleEditView(LoginRequiredMixin, UserPassesTestMixin, generic.UpdateView):
+class ArticleEditView(LoginRequiredMixin, UserPassesTestMixin,
+                      SortUserCategorySelectionMixin, generic.UpdateView):
     model = Article
     form_class = ArticleEditForm
     template_name_suffix = '_edit_form'
@@ -118,7 +136,8 @@ class ArticleEditView(LoginRequiredMixin, UserPassesTestMixin, generic.UpdateVie
         self.object = form.save(commit=False)
         self.object.updated_time = datetime.datetime.now(tz=datetime.timezone.utc)
         if self.object.progress == 100:
-            self.object.finished_time = datetime.datetime.now(tz=datetime.timezone.utc)
+            self.object.finished_time = datetime.datetime.now(
+                tz=datetime.timezone.utc)
         else:
             self.object.finished_time = None
 
@@ -162,15 +181,11 @@ class SettingsView(LoginRequiredMixin, generic.base.TemplateView):
         return context
 
 
-class CategoryCreateView(LoginRequiredMixin, UserPassesTestMixin, generic.CreateView):
+class CategoryCreateView(LoginRequiredMixin, generic.CreateView):
     model = Category
     form_class = CategoryCreateForm
     success_url = reverse_lazy('settings')
     template_name_suffix = '_create_form'
-
-    def test_func(self):
-        obj = self.get_object()
-        return obj.created_by == self.request.user
 
     def form_valid(self, form):
         form.instance.created_by = self.request.user
@@ -187,7 +202,9 @@ class CategoryEditView(LoginRequiredMixin, UserPassesTestMixin, generic.UpdateVi
         obj = self.get_object()
         return obj.created_by == self.request.user
 
-class CategoryDeleteView(LoginRequiredMixin, UserPassesTestMixin, generic.DeleteView):
+
+class CategoryDeleteView(LoginRequiredMixin, UserPassesTestMixin,
+                         generic.DeleteView):
     model = Category
     success_url = reverse_lazy('settings')
     error_url = reverse_lazy('category_delete_failed.html')
@@ -197,10 +214,3 @@ class CategoryDeleteView(LoginRequiredMixin, UserPassesTestMixin, generic.Delete
     def test_func(self):
         obj = self.get_object()
         return obj.created_by == self.request.user
-
-    def delete(self, request, *args, **kwargs):
-        del_object = self.get_object()
-        if del_object.name == 'Uncategorized':
-            return HttpResponseForbidden(b'Deleting "Uncategorized" category is not allowed.')
-        else:
-            return super().delete(self, request, *args, **kwargs)
