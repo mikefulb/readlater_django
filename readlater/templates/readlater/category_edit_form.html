@@ -13,7 +13,7 @@ Edit Category
 {% block content %}
 <form method="post">
     {% csrf_token %}
-    {% crispy form %}
-    <tr><td><input type="submit" value="Save" class="btn btn-success"></td></tr>
+    {{ form|crispy }}
+    <input type="submit" value="Save" class="btn btn-success">
 </form>
 {% endblock content %}
