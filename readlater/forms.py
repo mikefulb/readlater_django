@@ -16,9 +16,6 @@ class ArticleCreateForm(forms.ModelForm):
 
         self.helper = FormHelper(self)
 
-        # order category field options by name
-        self.fields['category'].queryset = self.fields['category'].queryset.order_by('name')
-
 
 class ArticleEditForm(forms.ModelForm):
     """Form for editing an existing Article record."""
