@@ -40,10 +40,18 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'crispy_forms',
+    'dbbackup',
     'readlater',
 ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
+
+DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
+DBBACKUP_STORAGE_OPTIONS = {
+    'location': os.path.join(BASE_DIR, 'backup')
+}
+DBBACKUP_FILENAME_TEMPLATE = '{datetime}-{databasename}.{extension}'
+DBBACKUP_MEDIA_FILENAME_TEMPLATE = '{datetime}-media.{extension}'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -83,9 +91,6 @@ if os.environ.get('USE_TEST_DB'):
     DATABASES['default']['TEST'] = {'NAME': 'test_'+DATABASES['default']['NAME']}
 else:
     DATABASES['default'] = dj_database_url.config(conn_max_age=600)
-
-# Password validation
-# https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
