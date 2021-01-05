@@ -88,7 +88,8 @@ DATABASES = {}
 if os.environ.get('USE_TEST_DB'):
     DATABASES['default'] = dj_database_url.config(env='TEST_DATABASE_URL', conn_max_age=600)
     # running with --keepdb so make sure it is pointing at 'test_' + regular app db name
-    DATABASES['default']['TEST'] = {'NAME': 'test_'+DATABASES['default']['NAME']}
+    #DATABASES['default']['TEST'] = {'NAME': 'test_'+DATABASES['default']['NAME']}
+    DATABASES['default']['TEST'] = {'NAME': DATABASES['default']['NAME']}
 else:
     DATABASES['default'] = dj_database_url.config(conn_max_age=600)
 
