@@ -153,7 +153,7 @@ logging.config.dictConfig({
 })
 
 
-logging.info(f'DATABASES={DATABASES}')
+#logging.info(f'DATABASES={DATABASES}')
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
