@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 import os
+import logging
 import logging.config
 from pathlib import Path
 import dj_database_url
@@ -150,6 +151,9 @@ logging.config.dictConfig({
         # },
     },
 })
+
+
+logging.info(f'DATABASES={DATABASES}')
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
