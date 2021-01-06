@@ -1,0 +1,4 @@
+__pycache__
+*.pyc
+readlater_django/.env
+db.sqlite3
