@@ -1,3 +1,4 @@
+import copy
 import datetime
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -106,7 +107,19 @@ class ArticleList(LoginRequiredMixin, generic.ListView):
 
         # see if any list ordering specified
         context['order_col'] = self._get_order_col_via_url()
+        filter_category = self.request.GET.get('filter_category', None)
+        if not filter_category:
+            filter_category = None
+        context['filter_category'] = filter_category
+        context['categories'] = Category.objects.filter(created_by=self.request.user).order_by('name')
 
+        # pass all query params but orderby
+        query_params = copy.deepcopy(self.request.GET)
+        exclude_params = ['orderby']
+        for exclude in exclude_params:
+            if exclude in query_params:
+                del query_params[exclude]
+        context['query_params'] = query_params
         return context
 
 

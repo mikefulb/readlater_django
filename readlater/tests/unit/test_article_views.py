@@ -9,6 +9,7 @@ logger.setLevel(logging.DEBUG)
 from django.urls import reverse
 from django.utils.http import urlencode
 from django.test import TestCase
+from bs4 import BeautifulSoup
 
 from ...models import Article, Category
 from ...forms import ArticleCreateForm, ArticleEditForm
@@ -28,6 +29,7 @@ class ArticleListViewTest(TestUserMixin, TestCase):
         for article_id in range(ArticleListViewTest.NUM_ARTICLES):
             art_categ = Category.objects.get(name='Category ' \
                                   f'{categ_id % ArticleListViewTest.NUM_CATEGORIES}')
+            categ_id += 1
             Article.objects.create(name=f'Article {article_id}',
                                    category=art_categ,
                                    priority=article_id * 100,
@@ -90,6 +92,36 @@ class ArticleListViewTest(TestUserMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(len(
             response.context['article_list']) == ArticleListViewTest.NUM_ARTICLES)
+
+    def test_view_filter_category(self):
+        self._login()
+
+        # loop through all categories and test filter by
+        for categ in Category.objects.all():
+            query = urlencode(dict(filter_category=categ.name))
+            response = self.client.get(f'/readlater/articles/?{query}')
+            self.assertEqual(response.status_code, 200)
+
+            # parse filter select is set to 'Category 1'
+            soup = BeautifulSoup(response.content, 'html.parser')
+
+            select = soup.find(id='filtertable-select-category')
+            self.assertIsNotNone(select)
+            selected_option = select.find_all('option', selected=True)
+            self.assertIsNotNone(selected_option)
+            self.assertEqual(len(selected_option), 1)
+            self.assertEqual(selected_option[0].getText().strip(), categ.name)
+
+            # check rows in the table list of articles for 'Category 1' only
+            # category is 3rd column
+            table = soup.find(id='table-article-list')
+            self.assertIsNotNone(table)
+            rows = table.find_all('tr')
+            expected_rows = len(Article.objects.filter(category=categ.id))
+            self.assertEqual(len(rows), expected_rows)
+            for row in rows:
+                cols = row.find_all('td')
+                self.assertEqual(cols[2].getText(), categ.name)
 
 
 class ArticleCreateNewViewTest(TestUserMixin, TestCase):

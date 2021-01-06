@@ -5,6 +5,7 @@ from urllib.parse import urljoin
 
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.urls import reverse
+from selenium.webdriver.support.select import Select
 
 from .utils import FunctionalTestBaseMixin, FunctionalTestLoginMixin
 
@@ -218,13 +219,54 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
         self._check_article_list_ordering(self.READ_PROGRESS_SORT_ARGS,
                                           self.NUM_READ_ARTICLES, 'read')
 
-        # click on cateogry column header to switch to sort by category
+        # click on categry column header to switch to sort by category
         cat_col_header = self.selenium.find_element_by_link_text('Category')
         self.assertIsNotNone(cat_col_header)
         cat_col_header.click()
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
         self._check_article_list_ordering(self.READ_CATEGORY_SORT_ARGS,
                                           self.NUM_READ_ARTICLES, 'read')
+
+    def test_view_filter_category(self):
+        self._create_article_list()
+        self._login(urljoin(self.live_server_url, reverse('login')))
+        # seems to help to have a delay between login and next page access
+        time.sleep(LOGIN_DELAY_SEC)
+        url = urljoin(self.live_server_url, reverse('article_list'))
+        self.selenium.get(url)
+        self.wait_for(
+            lambda: self.assertIn('ReadLater', self.selenium.page_source))
+
+        # loop through all categories and test filter by
+        for categ in Category.objects.all():
+
+            select = Select(self.selenium.find_element_by_id('filtertable-select-category'))
+            select.select_by_visible_text(categ.name)
+            form = self.selenium.find_element_by_id('filtertable-form')
+            form.submit()
+
+            self.wait_for(
+                lambda: self.assertIn('ReadLater', self.selenium.page_source))
+            time.sleep(LOGIN_DELAY_SEC)
+            # parse filter select is set to 'Category 1'
+            select = Select(self.selenium.find_element_by_id('filtertable-select-category'))
+            self.assertIsNotNone(select)
+            self.assertEqual(len(select.all_selected_options), 1)
+            self.assertEqual(select.all_selected_options[0].text.strip(), categ.name)
+
+            # check rows in the table list of articles for 'Category 1' only
+            # category is 3rd column
+            table = self.selenium.find_element_by_id('table-article-list')
+            self.assertIsNotNone(table)
+            tbody = table.find_element_by_tag_name('tbody')
+            self.assertIsNotNone(tbody)
+            rows = tbody.find_elements_by_tag_name('tr')
+            self.assertGreaterEqual(len(rows), 0)
+            expected_rows = len(Article.objects.filter(category=categ.id))
+            for row in rows:
+                cols = row.find_elements_by_tag_name('td')
+                self.assertEqual(cols[2].text, categ.name)
+
 
     def test_load_article_edit_article(self):
         self._create_article_list()

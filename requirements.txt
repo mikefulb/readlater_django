@@ -12,4 +12,5 @@ gunicorn
 coverage == 5.3
 requests
 selenium
+bs4
 #geckodriver

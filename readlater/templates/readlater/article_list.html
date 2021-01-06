@@ -23,43 +23,72 @@ Article List
 
 {% block content %}
 
+    <form class="form-inline" role="form" id="filtertable-form" action="" method="get">
+        <div class="input-group">
+            <span class="input-group-append"><label for="filtertable-select-category">Display category:</label></span>
+
+            <div class="form-group">
+                <select class="browser-default custom-select" id="filtertable-select-category" name="filter_category">
+                    <option value=""
+                        {% if filter_category is None %}
+                                selected
+                        {% endif %}
+                        >ALL
+                    </option>
+
+                    {% for categ in categories %}
+                        <option value="{{ categ }}"
+                            {# if filter_category|stringformat:"s" == categ|stringformat:"s" #}
+                            {% if filter_category == categ.name %}
+                                    selected
+                            {% endif %}
+                            >{{ categ }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <span class="input-group-append"><input type="submit" value="Filter"></span>
+        </div>
+    </form>
+
 {% if article_list %}
 <a href="{% url 'article_create_form' %}" id="create_article_href_top">Create Article</a>
-<table class="table table-striped">
+<table class="table table-striped" id="table-article-list">
   <thead class="thead-dark">
     <th>Link</th>
     <th>Name</th>
     {% if order_col == 'category' %}
         <th>Category</th>
     {% else %}
-        <th><a href="{% url 'article_list' %}{{ state }}?orderby=-category">Category</a></th>
+        <th><a href="{% url 'article_list' %}{{ state }}?orderby=-category&{{ query_params.urlencode }}">Category</a></th>
     {% endif %}
     <th>Notes</th>
     {% if order_col == 'priority' %}
         <th>Priority</th>
     {% else %}
-        <th><a href="{% url 'article_list' %}{{ state }}?orderby=priority">Priority</a></th>
+        <th><a href="{% url 'article_list' %}{{ state }}?orderby=priority&{{ query_params.urlencode }}">Priority</a></th>
     {% endif %}
     {% if order_col == 'progress' %}
         <th>Progress</th>
     {% else %}
-        <th><a href="{% url 'article_list' %}{{ state }}?orderby=progress">Progress</a></th>
+        <th><a href="{% url 'article_list' %}{{ state }}?orderby=progress&{{ query_params.urlencode }}">Progress</a></th>
     {% endif %}
     {% if order_col == 'updated_time' %}
         <th>Updated</th>
     {% else %}
-        <th><a href="{% url 'article_list' %}{{ state }}?orderby=-updated_time">Updated</a></th>
+        <th><a href="{% url 'article_list' %}{{ state }}?orderby=-updated_time&{{ query_params.urlencode }}">Updated</a></th>
     {% endif %}
     {% if order_col == 'added_time' %}
         <th>Added</th>
     {% else %}
-        <th><a href="{% url 'article_list' %}{{ state }}?orderby=-added_time">Added</a></th>
+        <th><a href="{% url 'article_list' %}{{ state }}?orderby=-added_time&{{ query_params.urlencode }}">Added</a></th>
     {% endif %}
     {% if state == 'read' %}
         {% if order_col != 'finished_time' %}
             <th>Finished</th>
         {% else %}
-            <th><a href="{% url 'article_list' %}{{ state }}?orderby=-finished_time">Finished</a></th>
+            <th><a href="{% url 'article_list' %}{{ state }}?orderby=-finished_time&{{ query_params.urlencode }}">Finished</a></th>
         {% endif %}
     {% else %}
         <th></th>
@@ -71,6 +100,7 @@ Article List
 </thead>
   <tbody>
     {% for article in article_list %}
+        {% if filter_category is None or article.category.name == filter_category %}
       <tr>
           <td><a href="{{ article.url }}">LINK</a></td>
           <td>{{ article.name }}</td>
@@ -84,6 +114,7 @@ Article List
           <td><a href="{% url 'article_edit_form' article.pk %}?state={{ state|urlencode }}">EDIT</a></td>
           <td><a href="{% url 'article_delete_form' article.pk %}?state={{ state|urlencode }}">DELETE</a></td>
      </tr>
+        {% endif %}
     {% endfor %}
   </tbody>
 </table>
