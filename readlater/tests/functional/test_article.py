@@ -140,7 +140,6 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
                 # if actual_qs.get(k)[0] != v:
                 #     breakpoint()
                 # strip off any trailing '&'
-                breakpoint()
                 self.assertEqual(actual_qs.get(k)[0].rstrip('&'), v)
 
         tbody = self.selenium.find_element_by_tag_name('tbody')
