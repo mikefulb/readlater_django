@@ -1,8 +1,11 @@
 import copy
 import datetime
+import urllib
+from operator import itemgetter
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.http import Http404
+from django.utils.http import urlencode
 from django.views import generic
 from django.urls import reverse_lazy, reverse
 
@@ -113,13 +116,28 @@ class ArticleList(LoginRequiredMixin, generic.ListView):
         context['filter_category'] = filter_category
         context['categories'] = Category.objects.filter(created_by=self.request.user).order_by('name')
 
+        filter_priority = self.request.GET.get('filter_priority', None)
+        if not filter_priority:
+            filter_priority = None
+        context['filter_priority'] = filter_priority
+
+        # pull out display values for choices for priority and filter out
+        # any like '-------' and sort from highest to lower priority
+        # HIGHEST priority corresponds to LOWEST priority value
+        priority_choices = [(a,b) for a,b in Article.priority.field.get_choices() if isinstance(a, int)]
+        priority_choices.sort(key=itemgetter(0))
+        context['priorities'] = [b for (a, b) in priority_choices]
+
         # pass all query params but orderby
         query_params = copy.deepcopy(self.request.GET)
+        context['full_query_params'] = query_params
         exclude_params = ['orderby']
         for exclude in exclude_params:
             if exclude in query_params:
                 del query_params[exclude]
-        context['query_params'] = query_params
+        context['filter_query_params'] = query_params
+
+        context['current_url'] = self.request.get_full_path()
         return context
 
 
@@ -129,9 +147,34 @@ class ArticleCreateView(LoginRequiredMixin, SortUserCategorySelectionMixin,
     form_class = ArticleCreateForm
     template_name_suffix = '_create_form'
 
+    def get_initial(self):
+        initial = super().get_initial()
+        initial['next'] = self.request.GET.get('next')
+        cur_categ_name = self.request.GET.get('filter_category')
+        if cur_categ_name:
+            categ = Category.objects.get(name=cur_categ_name)
+            if categ:
+                initial['category'] = categ.id
+        cur_priority_name = self.request.GET.get('filter_priority')
+        if cur_priority_name:
+            for value, name in Article.priority.field.get_choices():
+                if cur_priority_name == name:
+                    initial['priority'] = value
+                    break
+        return initial
+
     def form_valid(self, form):
         form.instance.created_by = self.request.user
+        self.success_url = form.cleaned_data.get('next')
         return super().form_valid(form)
+
+    def get_success_url(self):
+        # make sure we go back to page that we were called from
+        next_url = self.success_url
+        if next_url:
+            return next_url
+        else:
+            return reverse('article_list')
 
 
 class ArticleEditView(LoginRequiredMixin, UserPassesTestMixin,
@@ -144,6 +187,11 @@ class ArticleEditView(LoginRequiredMixin, UserPassesTestMixin,
         obj = self.get_object()
         return obj.created_by == self.request.user
 
+    def get_initial(self):
+        initial = super().get_initial()
+        initial['next'] = self.request.GET.get('next')
+        return initial
+
     def form_valid(self, form):
         """ Add values to instance before saving """
         self.object = form.save(commit=False)
@@ -153,13 +201,17 @@ class ArticleEditView(LoginRequiredMixin, UserPassesTestMixin,
                 tz=datetime.timezone.utc)
         else:
             self.object.finished_time = None
-
+        self.success_url = form.cleaned_data.get('next')
         return super().form_valid(form)
 
     def get_success_url(self):
         # make sure we go back to page that we were called from
-        state = self.request.GET.get('state')
-        return reverse('article_list_with_state', kwargs={'state': state})
+        next_url = self.success_url
+        if next_url:
+            return next_url
+        else:
+            state = self.request.GET.get('state')
+            return reverse('article_list_with_state', kwargs={'state': state})
 
 
 class ArticleDeleteView(LoginRequiredMixin, UserPassesTestMixin, generic.DeleteView):
@@ -174,10 +226,23 @@ class ArticleDeleteView(LoginRequiredMixin, UserPassesTestMixin, generic.DeleteV
     def get_queryset(self):
         return super().get_queryset().filter(created_by=self.request.user)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context['next'] = self.request.GET.get('next')
+        return context
+
+    def post(self, request, *args, **kwargs):
+        self.success_url = request.POST.get('next')
+        return super().post(request, *args, **kwargs)
+
     def get_success_url(self):
         # make sure we go back to page that we were called from
-        state = self.request.POST.get('state')
-        return reverse('article_list_with_state', kwargs={'state': state})
+        next_url = self.success_url
+        if next_url:
+            return next_url
+        else:
+            state = self.request.GET.get('state')
+            return reverse('article_list_with_state', kwargs={'state': state})
 
 
 class SettingsView(LoginRequiredMixin, generic.base.TemplateView):

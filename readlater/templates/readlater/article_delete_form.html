@@ -11,7 +11,7 @@ Delete Article
 {% block content %}
     <form method="post">{% csrf_token %}
     <p>Are you sure you want to delete the article {{ object }}?</p>
-    <input type="hidden" name="state" value="{{ request.GET.state }}">
+    <input type="hidden" name="next" value="{{ next }}">
     <input type="submit" value="Confirm">
 </form>
 

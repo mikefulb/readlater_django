@@ -25,7 +25,7 @@ Article List
 
     <form class="form-inline" role="form" id="filtertable-form" action="" method="get">
         <div class="input-group">
-            <span class="input-group-append"><label for="filtertable-select-category">Display category:</label></span>
+            <span class="input-group-append"><label for="filtertable-select-category">Category:</label></span>
 
             <div class="form-group">
                 <select class="browser-default custom-select" id="filtertable-select-category" name="filter_category">
@@ -38,11 +38,32 @@ Article List
 
                     {% for categ in categories %}
                         <option value="{{ categ }}"
-                            {# if filter_category|stringformat:"s" == categ|stringformat:"s" #}
                             {% if filter_category == categ.name %}
                                     selected
                             {% endif %}
                             >{{ categ }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <span class="input-group-append"><label for="filtertable-select-priority">Priority:</label></span>
+
+            <div class="form-group">
+                <select class="browser-default custom-select" id="filtertable-select-priority" name="filter_priority">
+                    <option value=""
+                        {% if filter_priority is None %}
+                                selected
+                        {% endif %}
+                        >ALL
+                    </option>
+
+                    {% for priority in priorities %}
+                        <option value="{{ priority }}"
+                            {% if priority == filter_priority %}
+                                    selected
+                            {% endif %}
+                            >{{ priority }}
                         </option>
                     {% endfor %}
                 </select>
@@ -53,7 +74,7 @@ Article List
     </form>
 
 {% if article_list %}
-<a href="{% url 'article_create_form' %}" id="create_article_href_top">Create Article</a>
+<a href="{% url 'article_create_form' %}?next={{ current_url|urlencode }}" id="create_article_href_top">Create Article</a>
 <table class="table table-striped" id="table-article-list">
   <thead class="thead-dark">
     <th>Link</th>
@@ -61,34 +82,34 @@ Article List
     {% if order_col == 'category' %}
         <th>Category</th>
     {% else %}
-        <th><a href="{% url 'article_list' %}{{ state }}?orderby=-category&{{ query_params.urlencode }}">Category</a></th>
+        <th><a href="{% url 'article_list' %}{{ state }}?orderby=-category&{{ filter_query_params.urlencode }}">Category</a></th>
     {% endif %}
     <th>Notes</th>
     {% if order_col == 'priority' %}
         <th>Priority</th>
     {% else %}
-        <th><a href="{% url 'article_list' %}{{ state }}?orderby=priority&{{ query_params.urlencode }}">Priority</a></th>
+        <th><a href="{% url 'article_list' %}{{ state }}?orderby=priority&{{ filter_query_params.urlencode }}">Priority</a></th>
     {% endif %}
     {% if order_col == 'progress' %}
         <th>Progress</th>
     {% else %}
-        <th><a href="{% url 'article_list' %}{{ state }}?orderby=progress&{{ query_params.urlencode }}">Progress</a></th>
+        <th><a href="{% url 'article_list' %}{{ state }}?orderby=progress&{{ filter_query_params.urlencode }}">Progress</a></th>
     {% endif %}
     {% if order_col == 'updated_time' %}
         <th>Updated</th>
     {% else %}
-        <th><a href="{% url 'article_list' %}{{ state }}?orderby=-updated_time&{{ query_params.urlencode }}">Updated</a></th>
+        <th><a href="{% url 'article_list' %}{{ state }}?orderby=-updated_time&{{ filter_query_params.urlencode }}">Updated</a></th>
     {% endif %}
     {% if order_col == 'added_time' %}
         <th>Added</th>
     {% else %}
-        <th><a href="{% url 'article_list' %}{{ state }}?orderby=-added_time&{{ query_params.urlencode }}">Added</a></th>
+        <th><a href="{% url 'article_list' %}{{ state }}?orderby=-added_time&{{ filter_query_params.urlencode }}">Added</a></th>
     {% endif %}
     {% if state == 'read' %}
         {% if order_col != 'finished_time' %}
             <th>Finished</th>
         {% else %}
-            <th><a href="{% url 'article_list' %}{{ state }}?orderby=-finished_time&{{ query_params.urlencode }}">Finished</a></th>
+            <th><a href="{% url 'article_list' %}{{ state }}?orderby=-finished_time&{{ filter_query_params.urlencode }}">Finished</a></th>
         {% endif %}
     {% else %}
         <th></th>
@@ -101,7 +122,8 @@ Article List
   <tbody>
     {% for article in article_list %}
         {% if filter_category is None or article.category.name == filter_category %}
-      <tr>
+        {% if filter_priority is None or article.get_priority_display == filter_priority %}
+        <tr>
           <td><a href="{{ article.url }}">LINK</a></td>
           <td>{{ article.name }}</td>
           <td>{{ article.category|default_if_none:"Uncategorized" }}</td>
@@ -111,9 +133,10 @@ Article List
           <td>{{ article.updated_time|default_if_none:''|nice_timesince}}</td>
           <td>{{ article.added_time|nice_timesince }}</td>
           <td>{{ article.finished_time|default_if_none:''|nice_timesince}}</td>
-          <td><a href="{% url 'article_edit_form' article.pk %}?state={{ state|urlencode }}">EDIT</a></td>
-          <td><a href="{% url 'article_delete_form' article.pk %}?state={{ state|urlencode }}">DELETE</a></td>
-     </tr>
+          <td><a href="{% url 'article_edit_form' article.pk %}?next={{ current_url|urlencode }}">EDIT</a></td>
+          <td><a href="{% url 'article_delete_form' article.pk %}?next={{ current_url|urlencode }}">DELETE</a></td>
+        </tr>
+        {% endif %}
         {% endif %}
     {% endfor %}
   </tbody>
@@ -122,5 +145,5 @@ Article List
 <p>There are no articles.</p>
 {% endif %}
 <br>
-<a href="{% url 'article_create_form' %}" id="create_article_href_bottom">Create Article</a>
+<a href="{% url 'article_create_form' %}?{{ filter_query_params.urlencode }}&next={{ current_url|urlencode }}" id="create_article_href_bottom">Create Article</a>
 {% endblock %}

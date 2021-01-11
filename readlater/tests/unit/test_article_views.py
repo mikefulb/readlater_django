@@ -1,4 +1,5 @@
 import logging
+from urllib.parse import urljoin
 
 from .utils import TestUserMixin
 
@@ -202,20 +203,50 @@ class ArticleCreateNewViewTest(TestUserMixin, TestCase):
                                       priority=-1000))
         self.assertFalse(form.is_valid())
 
+    def _submit_post(self, url, categ):
+        return self.client.post(url,
+                                data={'name': 'Article',
+                                      'notes': 'Notes',
+                                      'url': 'http://this.org/index.html',
+                                      'category': categ.id,
+                                      'priority': 200,
+                                      }, follow=True)
+
     def test_article_create_form_valid_post(self):
         self._login()
         self.assertEqual(len(Article.objects.all()), 0)
         categ = Category.objects.get(name='Category')
-        response = self.client.post(reverse('article_create_form'),
-                                    data={'name': 'Article',
-                                          'notes': 'Notes',
-                                          'url': 'http://this.org/index.html',
-                                          'category': categ.id,
-                                          'priority': 200,
-                                          }, follow=True)
+        response = self._submit_post(reverse('article_create_form'), categ)
         self.assertEqual(response.status_code, 200)
         self.assertRedirects(response, reverse('article_list'))
         self.assertEqual(len(Article.objects.all()), 1)
+
+    def test_article_create_prefill_form(self):
+        """Test that create article form is prefilled with category and priority."""
+        self._login()
+        categ = Category.objects.get(name=f'Category', created_by=self.user)
+        self.assertIsNotNone(categ)
+        response = self.client.get('/readlater/article/create/new?filter_category=Category&filter_priority=Normal')
+
+        # test that 'Read' is a link to the read page from the unread page
+        self.assertContains(response, '<h4>Create Article</h4>', status_code=200)
+
+        # test that category is set to 'Category'
+        soup = BeautifulSoup(response.content, 'html.parser')
+        form = soup.find('form')
+        select = form.find(id='id_category')
+        self.assertIsNotNone(select)
+        selected_option = select.find_all('option', selected=True)
+        self.assertIsNotNone(selected_option)
+        self.assertEqual(len(selected_option), 1)
+        self.assertEqual(selected_option[0].getText().strip(), categ.name)
+
+        select = form.find(id='id_priority')
+        self.assertIsNotNone(select)
+        selected_option = select.find_all('option', selected=True)
+        self.assertIsNotNone(selected_option)
+        self.assertEqual(len(selected_option), 1)
+        self.assertEqual(selected_option[0].getText().strip(), 'Normal')
 
 
 class ArticleEditViewTest(TestUserMixin, TestCase):

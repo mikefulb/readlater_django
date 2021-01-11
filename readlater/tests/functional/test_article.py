@@ -267,7 +267,6 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
                 cols = row.find_elements_by_tag_name('td')
                 self.assertEqual(cols[2].text, categ.name)
 
-
     def test_load_article_edit_article(self):
         self._create_article_list()
         self._login(urljoin(self.live_server_url, reverse('login')))
@@ -362,8 +361,9 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
         # seems to help to have a delay between login and next page access
         time.sleep(LOGIN_DELAY_SEC)
 
-        # load page
+        # load page specifying a filter for category and priority
         url = urljoin(self.live_server_url, reverse('article_list'))
+        url = f'{url}?filter_category=Category+0&filter_priority=High'
         self.selenium.get(url)
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
 
@@ -384,6 +384,8 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
         cat_ele = self.selenium.find_element_by_name('category')
         self.assertIsNotNone(cat_ele)
         self.assertEqual(cat_ele.tag_name, 'select')
+        cat_select = Select(cat_ele)
+        self.assertEqual(cat_select.first_selected_option.text, 'Category 0')
         set_option = False
         for option in cat_ele.find_elements_by_tag_name('option'):
             if option.text == categ.name:
@@ -395,6 +397,8 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
         pri_ele = self.selenium.find_element_by_name('priority')
         self.assertIsNotNone(pri_ele)
         self.assertEqual(pri_ele.tag_name, 'select')
+        pri_select = Select(pri_ele)
+        self.assertEqual(pri_select.first_selected_option.text, 'High')
         set_option = False
         for option in pri_ele.find_elements_by_tag_name('option'):
             if option.text == 'Normal':
@@ -413,6 +417,20 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
         # wait for form to redirect and load list of categories and verify first
         # category changed
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
+
+        # verify filter set 'Category 0' and 'Normal'
+        cat_select = Select(self.selenium.find_element_by_id('filtertable-select-category'))
+        self.assertIsNotNone(cat_select)
+        self.assertEqual(cat_select.first_selected_option.text, 'Category 0')
+        pri_select = Select(self.selenium.find_element_by_id('filtertable-select-priority'))
+        self.assertEqual(pri_select.first_selected_option.text, 'High')
+
+        # load page with priority filter of 'Normal' to show created article
+        url = urljoin(self.live_server_url, reverse('article_list'))
+        url = f'{url}?filter_category=Category+0&filter_priority=Normal'
+        self.selenium.get(url)
+        self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
+
         tbody = self.selenium.find_element_by_tag_name('tbody')
         rows = tbody.find_elements_by_tag_name('tr')
         cols = rows[0].find_elements_by_tag_name('td')
