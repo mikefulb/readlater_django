@@ -1,10 +1,11 @@
 import re
 import time
 import datetime
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse, parse_qs
 
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.urls import reverse
+from django.utils.http import urlencode
 from selenium.webdriver.support.select import Select
 
 from .utils import FunctionalTestBaseMixin, FunctionalTestLoginMixin
@@ -37,7 +38,7 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
     UNREAD_PRIORITY_SORT_ARGS = [5, 0, 6, 1, 7, 2, 8, 3, 9, 4]
     UNREAD_CATEGORY_SORT_ARGS = [5, 0, 1, 6, 2, 7, 3, 8, 4, 9]
     UNREAD_PROGRESS_SORT_ARGS = [9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
-    READ_PRIORITY_SORT_ARGS = [10, 15, 11, 12, 13, 14]
+    READ_PRIORITY_SORT_ARGS = [15, 10, 11, 12, 13, 14]
     READ_CATEGORY_SORT_ARGS = [10, 15, 11, 12, 13, 14]
     READ_PROGRESS_SORT_ARGS = [10, 15, 11, 12, 13, 14]
 
@@ -114,7 +115,7 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
         for article_id in range(self.NUM_ARTICLES):
             self._create_article_by_index(article_id)
 
-    def _check_article_list_ordering(self, sort_ordering_args, num_rows_expected, state):
+    def _check_article_list_ordering(self, sort_ordering_args, num_rows_expected, kwargs=None):
         """
         Using an active webdriver object (self.selenium) search for a table body and
         examine the table rows of the article list.
@@ -125,9 +126,23 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
         :type sort_ordering_args: list
         :param num_rows_expected: Number of rows expected in article list.
         :type num_rows_expected: int
-        :param state: Type of article list - 'unread' or 'read'.
-        :type state: str
+        :param kwargs: Dictionary of expected query string arguments.
+        :type kwargs: dict
         """
+        def _check_url(actual_url, expected_path, expected_qs):
+            actual_parsed = urlparse(actual_url)
+            actual_qs = parse_qs(actual_parsed.query)
+            self.assertEqual(actual_parsed.path, expected_path)
+
+            # compare passed args to parsed query string
+            self.assertEqual(len(actual_qs), len(expected_qs))
+            for k, v in expected_qs.items():
+                # if actual_qs.get(k)[0] != v:
+                #     breakpoint()
+                # strip off any trailing '&'
+                breakpoint()
+                self.assertEqual(actual_qs.get(k)[0].rstrip('&'), v)
+
         tbody = self.selenium.find_element_by_tag_name('tbody')
         rows = tbody.find_elements_by_tag_name('tr')
         self.assertEqual(len(rows), num_rows_expected)
@@ -142,10 +157,11 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
             index = self._get_index_from_article_name(cols[1].text)
             art_pk = Article.objects.get(name=cols[1].text).id
             isort = sort_ordering_args[i]
-            if state == 'unread':
-                offset = 0
-            else:
+            if kwargs.get('state') == 'read':
                 offset = self.NUM_UNREAD_ARTICLES
+                #breakpoint()
+            else:
+                offset = 0
 
             name = self._create_article_name(isort)
             progress = self._create_article_progress(index+offset)
@@ -159,12 +175,18 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
             self.assertEqual(cols[3].text, notes)
             self.assertEqual(cols[4].text, priority)
             self.assertEqual(cols[5].text, f'{progress}')
+
+            # parse url and create dict of query string params
             edit_anchor = cols[9].find_element_by_tag_name('a').get_attribute('href')
-            expected = urljoin(self.live_server_url, f'/readlater/article/edit/{art_pk}?state={state}')
-            self.assertEqual(edit_anchor, expected)
+            #expected = urljoin(self.live_server_url, f'/readlater/article/edit/{art_pk}')
+            expected = f'/readlater/article/edit/{art_pk}'
+            _check_url(edit_anchor, expected, kwargs)
+
             del_anchor = cols[10].find_element_by_tag_name('a').get_attribute('href')
-            expected = urljoin(self.live_server_url, f'/readlater/article/delete/{art_pk}?state={state}')
-            self.assertEqual(del_anchor, expected)
+            #expected = urljoin(self.live_server_url, f'/readlater/article/delete/{art_pk}')
+            expected = f'/readlater/article/delete/{art_pk}'
+            _check_url(del_anchor, expected, kwargs)
+
 
     def test_load_article_empty_list(self):
         Article.objects.all().delete()
@@ -186,46 +208,65 @@ class ArticleListTestCase(FunctionalTestLoginMixin, FunctionalTestBaseMixin,
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
         # test default is priority sorting
         self._check_article_list_ordering(self.UNREAD_PRIORITY_SORT_ARGS,
-                                          self.NUM_UNREAD_ARTICLES, 'unread')
+                                          self.NUM_UNREAD_ARTICLES,
+                                          kwargs=dict(
+                                              next=reverse('article_list'),
+                                              state='unread')
+                                          )
 
         # click on progress column header to switch to sort by category
         prog_col_header = self.selenium.find_element_by_link_text('Progress')
         self.assertIsNotNone(prog_col_header)
         prog_col_header.click()
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
+        next = f'{reverse("article_list")}unread?orderby=progress'
         self._check_article_list_ordering(self.UNREAD_PROGRESS_SORT_ARGS,
-                                          self.NUM_UNREAD_ARTICLES, 'unread')
+                                          self.NUM_UNREAD_ARTICLES,
+                                          kwargs=dict(next=next, state='unread')
+                                          )
+
         # click on cateogry column header to switch to sort by category
         cat_col_header = self.selenium.find_element_by_link_text('Category')
         self.assertIsNotNone(cat_col_header)
         cat_col_header.click()
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
+        next = f'{reverse("article_list")}unread?orderby=-category'
         self._check_article_list_ordering(self.UNREAD_CATEGORY_SORT_ARGS,
-                                          self.NUM_UNREAD_ARTICLES, 'unread')
-
+                                          self.NUM_UNREAD_ARTICLES,
+                                          kwargs=dict(next=next, state='unread')
+                                          )
         # switch to read articles
         read_anchor = self.selenium.find_element_by_link_text('Read')
         self.assertIsNotNone(read_anchor)
         read_anchor.click()
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
+        next = f'{reverse("article_list")}read'
         self._check_article_list_ordering(self.READ_PRIORITY_SORT_ARGS,
-                                          self.NUM_READ_ARTICLES, 'read')
+                                          self.NUM_READ_ARTICLES,
+                                          kwargs=dict(next=next, state='read')
+                                          )
 
         # click on progress column header to switch to sort by category
         prog_col_header = self.selenium.find_element_by_link_text('Progress')
         self.assertIsNotNone(prog_col_header)
         prog_col_header.click()
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
+        next = f'{reverse("article_list")}read?orderby=progress'
         self._check_article_list_ordering(self.READ_PROGRESS_SORT_ARGS,
-                                          self.NUM_READ_ARTICLES, 'read')
+                                          self.NUM_READ_ARTICLES,
+                                          kwargs=dict(next=next, state='read')
+                                          )
 
         # click on categry column header to switch to sort by category
         cat_col_header = self.selenium.find_element_by_link_text('Category')
         self.assertIsNotNone(cat_col_header)
         cat_col_header.click()
         self.wait_for(lambda: self.assertIn('ReadLater', self.selenium.page_source))
+        next = f'{reverse("article_list")}read?orderby=-category'
         self._check_article_list_ordering(self.READ_CATEGORY_SORT_ARGS,
-                                          self.NUM_READ_ARTICLES, 'read')
+                                          self.NUM_READ_ARTICLES,
+                                          kwargs=dict(next=next, state='read')
+                                          )
 
     def test_view_filter_category(self):
         self._create_article_list()

@@ -74,7 +74,7 @@ Article List
     </form>
 
 {% if article_list %}
-<a href="{% url 'article_create_form' %}?next={{ current_url|urlencode }}" id="create_article_href_top">Create Article</a>
+<a href="{% url 'article_create_form' %}?next={{ current_url|urlencode:"" }}" id="create_article_href_top">Create Article</a>
 <table class="table table-striped" id="table-article-list">
   <thead class="thead-dark">
     <th>Link</th>
@@ -133,8 +133,8 @@ Article List
           <td>{{ article.updated_time|default_if_none:''|nice_timesince}}</td>
           <td>{{ article.added_time|nice_timesince }}</td>
           <td>{{ article.finished_time|default_if_none:''|nice_timesince}}</td>
-          <td><a href="{% url 'article_edit_form' article.pk %}?next={{ current_url|urlencode }}">EDIT</a></td>
-          <td><a href="{% url 'article_delete_form' article.pk %}?next={{ current_url|urlencode }}">DELETE</a></td>
+          <td><a href="{% url 'article_edit_form' article.pk %}?state={{ state }}&next={{ current_url|urlencode:"" }}">EDIT</a></td>
+          <td><a href="{% url 'article_delete_form' article.pk %}?state={{ state }}&next={{ current_url|urlencode:"" }}">DELETE</a></td>
         </tr>
         {% endif %}
         {% endif %}
@@ -145,5 +145,5 @@ Article List
 <p>There are no articles.</p>
 {% endif %}
 <br>
-<a href="{% url 'article_create_form' %}?{{ filter_query_params.urlencode }}&next={{ current_url|urlencode }}" id="create_article_href_bottom">Create Article</a>
+<a href="{% url 'article_create_form' %}?{{ filter_query_params.urlencode }}&next={{ current_url|urlencode:"" }}" id="create_article_href_bottom">Create Article</a>
 {% endblock %}
