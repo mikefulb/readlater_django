@@ -23,58 +23,56 @@ Article List
 
 {% block content %}
 
-    <form class="form-inline" role="form" id="filtertable-form" action="" method="get">
-        <div class="input-group">
-            <span class="input-group-append"><label for="filtertable-select-category">Category:</label></span>
+<form class="form-inline" role="form" id="filtertable-form" action="" method="get">
+    <label for="filtertable-select-category" class="pr-2">Category:</label>
+    <select class="form-control mb-6 mr-sm-4" id="filtertable-select-category" name="filter_category">
+        <option value=""
+            {% if filter_category is None %}
+                    selected
+            {% endif %}
+            >ALL
+        </option>
 
-            <div class="form-group">
-                <select class="browser-default custom-select" id="filtertable-select-category" name="filter_category">
-                    <option value=""
-                        {% if filter_category is None %}
-                                selected
-                        {% endif %}
-                        >ALL
-                    </option>
+        {% for categ in categories %}
+            <option value="{{ categ }}"
+                {% if filter_category == categ.name %}
+                        selected
+                {% endif %}
+                >{{ categ }}
+            </option>
+        {% endfor %}
+    </select>
 
-                    {% for categ in categories %}
-                        <option value="{{ categ }}"
-                            {% if filter_category == categ.name %}
-                                    selected
-                            {% endif %}
-                            >{{ categ }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
+    <label for="filtertable-select-priority" class="pr-2">Priority:</label>
 
-            <span class="input-group-append"><label for="filtertable-select-priority">Priority:</label></span>
+    <select class="form-control mb-6 mr-sm-4" id="filtertable-select-priority" name="filter_priority">
+        <option value=""
+            {% if filter_priority is None %}
+                    selected
+            {% endif %}
+            >ALL
+        </option>
 
-            <div class="form-group">
-                <select class="browser-default custom-select" id="filtertable-select-priority" name="filter_priority">
-                    <option value=""
-                        {% if filter_priority is None %}
-                                selected
-                        {% endif %}
-                        >ALL
-                    </option>
+        {% for priority in priorities %}
+            <option value="{{ priority }}"
+                {% if priority == filter_priority %}
+                        selected
+                {% endif %}
+                >{{ priority }}
+            </option>
+        {% endfor %}
+    </select>
 
-                    {% for priority in priorities %}
-                        <option value="{{ priority }}"
-                            {% if priority == filter_priority %}
-                                    selected
-                            {% endif %}
-                            >{{ priority }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
+    <input type="submit" class="btn-primary" value="Filter">
+</form>
 
-            <span class="input-group-append"><input type="submit" value="Filter"></span>
-        </div>
-    </form>
+
+
 
 {% if article_list %}
-<a href="{% url 'article_create_form' %}?next={{ current_url|urlencode:"" }}" id="create_article_href_top">Create Article</a>
+    <div class="py-2">
+<a class="btn btn-primary btn-sm" href="{% url 'article_create_form' %}?next={{ current_url|urlencode:"" }}" id="create_article_href_top">Create Article</a>
+    </div>
 <table class="table table-striped" id="table-article-list">
   <thead class="thead-dark">
     <th>Link</th>
@@ -144,6 +142,7 @@ Article List
 {% else %}
 <p>There are no articles.</p>
 {% endif %}
-<br>
-<a href="{% url 'article_create_form' %}?{{ filter_query_params.urlencode }}&next={{ current_url|urlencode:"" }}" id="create_article_href_bottom">Create Article</a>
+<div class="pt-0">
+<a class="btn btn-primary btn-sm" href="{% url 'article_create_form' %}?{{ filter_query_params.urlencode }}&next={{ current_url|urlencode:"" }}" id="create_article_href_bottom">Create Article</a>
+</div>
 {% endblock %}
