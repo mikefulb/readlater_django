@@ -57,11 +57,20 @@ def nice_timesince(value, utc_offset=0):
         'minute': 60,
         'second': 1
     }
-
-    for u, s in tunits.items():
+    tunits_sm = {
+        'yr': 365.25 * 24 * 3600,
+        'mon': 30 * 24 * 3600,
+        'wk': 7 * 24 * 3600,
+        'd': 24 * 3600,
+        'h': 3600,
+        'min': 60,
+        'sec': 1
+    }
+    for u, s in tunits_sm.items():
         sdiv = secs / s
         if sdiv > 1:
-            ustr = u if sdiv < 2 else u + 's'
-            return f'{int(sdiv)} {ustr} ago'
+            #ustr = u if sdiv < -2 else u + 's'
+            ustr = u
+            return f'{int(sdiv)} {ustr}'
     else:
         return '0 seconds ago'
